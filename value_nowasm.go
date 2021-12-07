@@ -4,8 +4,9 @@ package godom
 
 import (
 	"fmt"
-	"godom/convert"
 	"reflect"
+
+	"github.com/mlctrez/godom/convert"
 )
 
 var _ Value = (*value)(nil)
