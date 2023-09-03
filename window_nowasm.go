@@ -2,10 +2,11 @@
 
 package godom
 
+import "log"
+
 var globalWindow Window
 
-// GlobalClear clears the global for window
-func GlobalClear() {
+func globalClear() {
 	globalWindow = nil
 }
 
@@ -13,6 +14,7 @@ func Global() Window {
 	if globalWindow == nil {
 		wv := valueT(TypeObject)
 		wv.set("document", initialDocument())
+		wv.set("console", initialConsole())
 		globalWindow = &window{this: wv}
 		wv.SetGoValue(globalWindow)
 	}
@@ -24,8 +26,25 @@ func elementValue(d *document, ns, nodeName string) *value {
 	e.set("namespaceURI", ns)
 	e.set("nodeName", nodeName)
 	e.set("document", d)
+	e.set("remove", func() {})
+	e.set("replaceWith", func(v Value) {})
+	e.set("hasAttributes", func() Value { return ToValue(false) })
+	e.set("hasChildNodes", func() Value { return ToValue(false) })
+	e.set("attributes", func() Value { return ToValue([]interface{}{}) })
+	e.set("childNodes", func() Value { return ToValue([]interface{}{}) })
 	e.set("appendChild", func(v Value) {})
+	e.set("setAttribute", func(name string, value interface{}) {})
 	return e
+}
+func initialConsole() Value {
+	c := &console{}
+	v := valueT(TypeObject)
+	c.this = v
+	v.SetGoValue(c)
+	v.set("log", func(args ...interface{}) {
+		log.Println(args...)
+	})
+	return v
 }
 
 func initialDocument() Value {
@@ -39,8 +58,8 @@ func initialDocument() Value {
 	v.set("createElementNS", func(ns, nodeName string) Value {
 		return elementValue(d, ns, nodeName)
 	})
-	v.set("createTextNode", func() Value {
-		return valueT(TypeObject).set("document", d)
+	v.set("createTextNode", func(data string) Value {
+		return valueT(TypeObject).set("document", d).set("data", data)
 	})
 	return v
 }

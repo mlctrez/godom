@@ -1,13 +1,10 @@
 package godom
 
-type EventTarget interface {
-	AddEventListener(eventName string, listener interface{})
+type Event interface {
 }
 
-var _ EventTarget = (*eventTarget)(nil)
-
-type eventTarget struct{}
-
-func (d *eventTarget) AddEventListener(eventName string, listener interface{}) {
-	panic(IM)
+type EventListener interface {
+	AddEventListener(eventType string, fn OnEvent) func()
 }
+
+type OnEvent func(event Value) any

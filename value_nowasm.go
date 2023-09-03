@@ -140,7 +140,9 @@ func (v *value) Int() int {
 	panic(fmt.Errorf("value %s converstion to Int() failed", v.t))
 }
 
-func (v *value) Bool() bool { return v.data["bool"].(bool) }
+func (v *value) Bool() bool {
+	return v.data["bool"].(bool)
+}
 
 func (v *value) Truthy() bool {
 	switch v.t {
@@ -170,10 +172,6 @@ func (v *value) String() string {
 func (v *value) InstanceOf(t Value) bool {
 	panic(IM)
 }
-
-// helper methods below here
-
-func ptr(i interface{}) uintptr { return reflect.ValueOf(i).Pointer() }
 
 // Invoke is a sample demonstrating go reflection.
 func Invoke(any interface{}, name string, args ...interface{}) {

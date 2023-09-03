@@ -1,3 +1,5 @@
+//go:build !wasm
+
 package godom
 
 import "testing"

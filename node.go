@@ -6,8 +6,8 @@ import (
 
 // Node is defined by https://developer.mozilla.org/en-US/docs/Web/API/Node
 type Node interface {
-	EventTarget
-	Marshaler
+	Marshaller
+	EventListener
 	// ChildNodes implements Node.childNodes
 	ChildNodes() []Node
 	NodeName() string
@@ -21,7 +21,7 @@ type Node interface {
 var _ Node = (*node)(nil)
 
 type node struct {
-	eventTarget
+	//eventTarget
 	this     Value
 	nodeName string
 	ns       string

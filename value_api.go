@@ -1,5 +1,10 @@
 package godom
 
+import (
+	"fmt"
+	"reflect"
+)
+
 // Value is backed by js.Value when arch == wasm and value{} when arch != wasm.
 type Value interface {
 	// JSValue implements Wrapper interface.
@@ -102,6 +107,9 @@ func (t Type) String() string {
 	case TypeFunction:
 		return "function"
 	default:
-		panic("bad type")
+		return fmt.Sprintf("unknown :%d", t)
 	}
 }
+
+// helper methods below here
+func ptr(i interface{}) uintptr { return reflect.ValueOf(i).Pointer() }

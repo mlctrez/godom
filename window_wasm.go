@@ -8,6 +8,10 @@ import (
 
 var globalWasmWindow Window
 
+func globalClear() {
+	globalWasmWindow = nil
+}
+
 func Global() Window {
 	if globalWasmWindow == nil {
 		globalWasmWindow = &wasmWindow{v: FromJsValue(js.Global())}
@@ -19,9 +23,43 @@ var _ Window = (*wasmWindow)(nil)
 
 type wasmWindow struct {
 	v Value
+	d *document
+	n *navigator
+	l *location
+	c *console
 }
 
-func (w *wasmWindow) Document() Document   { panic(IM) }
-func (w *wasmWindow) Navigator() Navigator { panic(IM) }
-func (w *wasmWindow) Location() Location   { panic(IM) }
-func (w *wasmWindow) Console() Console     { panic(IM) }
+func (w *wasmWindow) Document() Document {
+	if w.d != nil {
+		return w.d
+	}
+	w.d = &document{}
+	w.d.this = w.v.Get("document")
+	w.d.this.SetGoValue(w.d)
+	return w.d
+}
+
+func (w *wasmWindow) Navigator() Navigator {
+	if w.n != nil {
+		return w.n
+	}
+	w.n = &navigator{}
+	w.n.this = w.v.Get("navigator")
+	return w.n
+}
+func (w *wasmWindow) Location() Location {
+	if w.l != nil {
+		return w.l
+	}
+	w.l = &location{}
+	w.l.this = w.v.Get("location")
+	return w.l
+}
+func (w *wasmWindow) Console() Console {
+	if w.c != nil {
+		return w.c
+	}
+	w.c = &console{}
+	w.c.this = w.v.Get("console")
+	return w.c
+}

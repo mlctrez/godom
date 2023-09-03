@@ -12,20 +12,30 @@ type Document interface {
 	CreateTextNode(text string) Text
 	CreateElement(tagName string) Element
 	CreateElementNS(namespaceURI, qualifiedName string) Element
+	Api() Doc
 }
 
 var _ Document = (*document)(nil)
 
 type document struct {
 	node
+	documentElement Element
+}
+
+func (d *document) Api() Doc {
+	return Doc{Doc: d}
 }
 
 func (d *document) DocumentElement() Element {
-	return d.this.Get("documentElement").GoValue().(Element)
+	if d.documentElement != nil {
+		return d.documentElement
+	}
+	d.documentElement = ElementFromValue(d.this.Get("documentElement"))
+	return d.documentElement
 }
 
 func (d *document) SetDocumentElement(e Element) {
-	d.this.Set("documentElement", e.This())
+	d.documentElement = e
 }
 
 func (d *document) Head() Element {
@@ -39,31 +49,20 @@ func (d *document) Body() Element {
 }
 
 func (d *document) CreateTextNode(data string) Text {
-	t := &text{data: data}
-	t.data = data
-	t.this = d.this.Call("createTextNode")
-	t.this.SetGoValue(t)
-	return t
+	return TextFromValue(d.this.Call("createTextNode", data))
 }
 
 func (d *document) CreateElement(tagName string) Element {
-	e := &element{}
-	e.nodeName = tagName
-	e.this = d.this.Call("createElement", tagName)
-	e.this.SetGoValue(e)
-	return e
+	return ElementFromValue(d.this.Call("createElement", tagName))
 }
 
 func (d *document) CreateElementNS(ns, nodeName string) Element {
-	e := &element{}
-	e.ns = ns
-	e.nodeName = nodeName
-	e.this = d.this.Call("createElementNS", ns, nodeName)
-	e.this.SetGoValue(e)
-	return e
+	return ElementFromValue(d.this.Call("createElementNS", ns, nodeName))
 }
 
-func (d *document) NodeType() NodeType { return NodeTypeDocument }
+func (d *document) NodeType() NodeType {
+	return NodeTypeDocument
+}
 
 func findElement(children []Node, nodeName string, panicOnError bool) Element {
 	for _, child := range children {

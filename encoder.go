@@ -15,7 +15,7 @@ type Encoder interface {
 	Xml() string
 }
 
-type Marshaler interface {
+type Marshaller interface {
 	Marshal(encoder Encoder) Encoder
 }
 

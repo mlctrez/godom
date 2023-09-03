@@ -6,7 +6,7 @@ import (
 )
 
 func TestDocument_Body(t *testing.T) {
-	GlobalClear()
+	globalClear()
 	doc := Doc{Doc: Global().Document()}
 	doc.Doc.SetDocumentElement(doc.El("html"))
 	root := doc.Doc.DocumentElement()
@@ -17,7 +17,7 @@ func TestDocument_Body(t *testing.T) {
 }
 
 func TestDocument_Head(t *testing.T) {
-	GlobalClear()
+	globalClear()
 	doc := Doc{Doc: Global().Document()}
 	doc.Doc.SetDocumentElement(doc.El("html"))
 	root := doc.Doc.DocumentElement()
@@ -55,19 +55,14 @@ func TestDocument_NodeType(t *testing.T) {
 }
 
 func TestDocument_DocumentElement(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("Document.DocumentElement did not panic")
-		}
-	}()
-	GlobalClear()
+	globalClear()
 	Global().Document().DocumentElement()
 }
 
 func TestDocument_findElement_fail(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("Document.DocumentElement did not panic")
+			t.Errorf("findElement did not panic")
 		}
 	}()
 	children := []Node{&node{nodeName: "foo"}}

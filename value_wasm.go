@@ -2,12 +2,22 @@
 
 package godom
 
-import "syscall/js"
+import (
+	"syscall/js"
+)
 
 var _ Value = (*wasmValue)(nil)
 
 func FromJsValue(v js.Value) Value {
 	return &wasmValue{jsv: v}
+}
+
+func FromJsValues(v ...js.Value) []Value {
+	result := make([]Value, len(v))
+	for i, value := range v {
+		result[i] = FromJsValue(value)
+	}
+	return result
 }
 
 func ToJsValues(args ...interface{}) (result []interface{}) {
@@ -18,10 +28,24 @@ func ToJsValues(args ...interface{}) (result []interface{}) {
 	return result
 }
 
-func ToJsValue(arg interface{}) js.Value {
+func ToJsValue(arg interface{}) interface{} {
 	switch v := arg.(type) {
+	case func(this Value, args []Value) interface{}:
+		return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			return v(FromJsValue(this), FromJsValues(args...))
+		})
+	case *wasmWindow:
+		return ToJsValue(v.v)
 	case *wasmValue:
 		return v.jsv
+	case *navigator:
+		return ToJsValue(v.this)
+	case *document:
+		return ToJsValue(v.this)
+	case *location:
+		return ToJsValue(v.this)
+	case *console:
+		return ToJsValue(v.this)
 	default:
 		return js.ValueOf(v)
 	}
