@@ -2,7 +2,10 @@
 
 package godom
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 var globalWindow Window
 
@@ -15,6 +18,7 @@ func Global() Window {
 		wv := valueT(TypeObject)
 		wv.set("document", initialDocument())
 		wv.set("console", initialConsole())
+		wv.set("location", initialLocation())
 		globalWindow = &window{this: wv}
 		wv.SetGoValue(globalWindow)
 	}
@@ -36,12 +40,16 @@ func elementValue(d *document, ns, nodeName string) *value {
 	e.set("setAttribute", func(name string, value interface{}) {})
 	return e
 }
+
 func initialConsole() Value {
 	c := &console{}
 	v := valueT(TypeObject)
 	c.this = v
 	v.SetGoValue(c)
 	v.set("log", func(args ...interface{}) {
+		log.Println(args...)
+	})
+	v.set("error", func(args ...interface{}) {
 		log.Println(args...)
 	})
 	return v
@@ -64,10 +72,26 @@ func initialDocument() Value {
 	return v
 }
 
+func initialLocation() Value {
+	d := &location{}
+	v := valueT(TypeObject)
+	d.this = v
+	v.SetGoValue(d)
+	v.set("href", "http://testserver")
+	v.set("reload", func() {
+		fmt.Println("reload called")
+	})
+	return v
+}
+
 var _ Window = (*window)(nil)
 
 type window struct {
 	this Value
+}
+
+func (w *window) Value() Value {
+	return w.this
 }
 
 func (w *window) value() *value {

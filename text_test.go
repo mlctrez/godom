@@ -2,6 +2,7 @@ package godom
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -31,4 +32,10 @@ func TestText_String(t *testing.T) {
 	if s != "data" {
 		t.Fatal("String() test failed")
 	}
+}
+func TestText_IsWhiteSpace(t *testing.T) {
+	a := assert.New(t)
+	a.False((&text{data: "data"}).IsWhiteSpace())
+	a.True((&text{data: ""}).IsWhiteSpace())
+	a.True((&text{data: "  \n  "}).IsWhiteSpace())
 }

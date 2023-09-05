@@ -1,4 +1,4 @@
-//go:build wasm
+//go:build js && wasm
 
 package godom
 
@@ -65,7 +65,7 @@ func (v *wasmValue) InstanceOf(t Value) bool { return v.jsv.InstanceOf(t.(*wasmV
 func (v *wasmValue) IsUndefined() bool       { return v.jsv.IsUndefined() }
 func (v *wasmValue) IsNull() bool            { return v.jsv.IsNull() }
 func (v *wasmValue) IsNaN() bool             { return v.IsNaN() }
-func (v *wasmValue) Type() Type              { return v.Type() }
+func (v *wasmValue) Type() Type              { return Type(v.jsv.Type()) }
 func (v *wasmValue) Length() int             { return v.jsv.Length() }
 func (v *wasmValue) Float() float64          { return v.jsv.Float() }
 func (v *wasmValue) Int() int                { return v.jsv.Int() }
@@ -86,4 +86,10 @@ func (v *wasmValue) Call(m string, args ...interface{}) Value {
 }
 func (v *wasmValue) Invoke(args ...interface{}) Value {
 	return FromJsValue(v.jsv.Invoke(ToJsValues(args...)...))
+}
+func (v *wasmValue) Bytes() []byte {
+	uint8Array := js.Global().Get("Uint8Array").New(v.jsv)
+	dst := make([]byte, uint8Array.Length())
+	js.CopyBytesToGo(dst, uint8Array)
+	return dst
 }

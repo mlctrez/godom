@@ -60,3 +60,11 @@ func FromReflectArgs(args []reflect.Value) (result []interface{}) {
 	}
 	return
 }
+
+func StringsAny(args ...string) []any {
+	result := make([]any, len(args))
+	for i, protocol := range args {
+		result[i] = protocol
+	}
+	return result
+}

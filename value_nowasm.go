@@ -173,6 +173,10 @@ func (v *value) InstanceOf(t Value) bool {
 	panic(IM)
 }
 
+func (v *value) Bytes() []byte {
+	panic(IM)
+}
+
 // Invoke is a sample demonstrating go reflection.
 func Invoke(any interface{}, name string, args ...interface{}) {
 	inputs := make([]reflect.Value, len(args))

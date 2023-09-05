@@ -77,5 +77,5 @@ func TestElement_Remove(t *testing.T) {
 func TestElement_AddEventHandler(t *testing.T) {
 	doc := Doc{Doc: Global().Document()}
 	e1 := doc.El("p")
-	e1.AddEventListener("foo", func(event Value) any { return nil })
+	e1.AddEventListener("foo", func(event Value) {})
 }

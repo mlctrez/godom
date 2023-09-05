@@ -55,7 +55,6 @@ func TestDocument_NodeType(t *testing.T) {
 }
 
 func TestDocument_DocumentElement(t *testing.T) {
-	globalClear()
 	Global().Document().DocumentElement()
 }
 

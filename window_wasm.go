@@ -22,11 +22,16 @@ func Global() Window {
 var _ Window = (*wasmWindow)(nil)
 
 type wasmWindow struct {
+	node
 	v Value
 	d *document
 	n *navigator
 	l *location
 	c *console
+}
+
+func (w *wasmWindow) Value() Value {
+	return w.v
 }
 
 func (w *wasmWindow) Document() Document {

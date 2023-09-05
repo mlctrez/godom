@@ -21,7 +21,6 @@ type Node interface {
 var _ Node = (*node)(nil)
 
 type node struct {
-	//eventTarget
 	this     Value
 	nodeName string
 	ns       string

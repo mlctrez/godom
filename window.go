@@ -1,9 +1,12 @@
 package godom
 
-import "log"
+import (
+	"log"
+)
 
 // Window is defined as https://developer.mozilla.org/en-US/docs/Web/API/Window
 type Window interface {
+	ThisValue
 	Document() Document
 	Navigator() Navigator
 	Location() Location
@@ -29,8 +32,13 @@ type location struct {
 	this Value
 }
 
-func (l *location) Reload()      { l.this.Call("reload") }
-func (l *location) Href() string { return l.this.Get("href").String() }
+func (l *location) Reload() {
+	l.this.Call("reload")
+}
+
+func (l *location) Href() string {
+	return l.this.Get("href").String()
+}
 
 type Console interface {
 	Log(args ...any)

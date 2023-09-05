@@ -68,11 +68,18 @@ type Value interface {
 	// it does not panic if v's Type is not TypeString. Instead, it returns a string of the form "<T>"
 	// or "<T: V>" where T is v's type and V is a string representation of v's value.
 	String() string
+
+	Bytes() []byte
+
 	// InstanceOf reports whether v is an instance of type t according to JavaScript's instanceof operator.
 	InstanceOf(t Value) bool
 
 	GoValue() interface{}
 	SetGoValue(gv interface{})
+}
+
+type ThisValue interface {
+	Value() Value
 }
 
 type Type int

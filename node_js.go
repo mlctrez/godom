@@ -6,7 +6,8 @@ import "syscall/js"
 
 func (d *node) AddEventListener(eventType string, fn OnEvent) func() {
 	jsFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
-		return fn(FromJsValue(args[0]))
+		fn(FromJsValue(args[0]))
+		return nil
 	})
 	d.this.Call("addEventListener", eventType, jsFunc)
 	return func() {
