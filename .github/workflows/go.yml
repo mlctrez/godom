@@ -16,10 +16,12 @@ jobs:
           go mod download
       - name: Install wasmbrowsertest
         run: |
-          echo $PATH
+          env
           git clone -b fs-api-forwarding https://github.com/mlctrez/wasmbrowsertest /tmp/wasmbrowsertest
+          ls -l /tmp/wasmbrowsertest
           go mod -C /tmp/wasmbrowsertest download
           go build -C /tmp/wasmbrowsertest -o /tmp/go_js_wasm_exec
+          ls -l /tmp/go_js_wasm_exec
       - name: Run Unit tests
         run: |
           go test -race -covermode atomic -coverprofile=covprofile .
