@@ -79,3 +79,16 @@ func testEncodeHelper(n Node) string {
 
 	return buf.String()
 }
+
+func TestDoc_directive(t *testing.T) {
+
+	doc := Doc{Doc: Global().Document()}
+	decodeString := func(s string) (Node, error) {
+		return doc.Decode(xml.NewDecoder(bytes.NewBufferString(s)))
+	}
+	_, err := decodeString("<!DOCTYPE html><html/>")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+}
