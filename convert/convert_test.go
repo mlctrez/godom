@@ -25,7 +25,7 @@ func TestToIntFail(t *testing.T) {
 		case error:
 			req.Equal("ToInt failed for bad", rt.Error())
 		default:
-			req.Fail("recover did not produce and error")
+			req.Fail("recover did not produce error")
 		}
 	}()
 	ToInt("bad")
@@ -50,8 +50,22 @@ func TestToFloatFail(t *testing.T) {
 		case error:
 			req.Equal("ToFloat failed for bad", rt.Error())
 		default:
-			req.Fail("recover did not produce and error")
+			req.Fail("recover did not produce error")
 		}
 	}()
 	ToFloat("bad")
+}
+
+func TestStringsAny(t *testing.T) {
+	a := assert.New(t)
+	stringsAny := StringsAny("1", "2", "3")
+	a.True(len(stringsAny) == 3)
+	a.Equal("1", stringsAny[0])
+}
+
+func TestToReflectArgs(t *testing.T) {
+	a := assert.New(t)
+	result := FromReflectArgs(ToReflectArgs("a", "b", "c"))
+	a.True(len(result) == 3)
+	a.Equal("a", result[0])
 }

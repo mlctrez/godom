@@ -3,6 +3,7 @@
 package gws
 
 import (
+	"errors"
 	"github.com/mlctrez/godom"
 	"syscall/js"
 )
@@ -36,12 +37,16 @@ func (ws *webSocket) sendBinary(message []byte) (err error) {
 func handleJSError(err *error, onErr func()) {
 	r := recover()
 
-	if jsErr, ok := r.(js.Error); ok {
-		*err = jsErr
-		if onErr != nil {
-			onErr()
+	switch e := r.(type) {
+	case error:
+		var jsErr js.Error
+		if errors.As(e, &jsErr) {
+			*err = jsErr
+			if onErr != nil {
+				onErr()
+			}
+			return
 		}
-		return
 	}
 
 	if r != nil {

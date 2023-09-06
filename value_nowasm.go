@@ -122,7 +122,10 @@ func (v *value) Call(m string, args ...interface{}) Value {
 }
 
 func (v *value) Invoke(args ...interface{}) Value { panic(IM) }
-func (v *value) New(args ...interface{}) Value    { panic(IM) }
+func (v *value) New(args ...interface{}) Value {
+
+	panic(IM)
+}
 
 func (v *value) Float() float64 {
 	switch v.t {

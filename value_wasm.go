@@ -20,14 +20,6 @@ func FromJsValues(v ...js.Value) []Value {
 	return result
 }
 
-func ToJsValues(args ...interface{}) (result []interface{}) {
-	result = make([]interface{}, len(args))
-	for i, arg := range args {
-		result[i] = ToJsValue(arg)
-	}
-	return result
-}
-
 func ToJsValue(arg interface{}) interface{} {
 	switch v := arg.(type) {
 	case func(this Value, args []Value) interface{}:
@@ -49,6 +41,14 @@ func ToJsValue(arg interface{}) interface{} {
 	default:
 		return js.ValueOf(v)
 	}
+}
+
+func ToJsValues(args ...interface{}) (result []interface{}) {
+	result = make([]interface{}, len(args))
+	for i, arg := range args {
+		result[i] = ToJsValue(arg)
+	}
+	return result
 }
 
 type wasmValue struct {

@@ -17,7 +17,7 @@ type webSocket struct {
 }
 
 func wsUrl(url string) string {
-	replaceParts := []string{"http://", "ws://", "https://", "ws://"}
+	replaceParts := []string{"http://", "ws://", "https://", "wss://"}
 	return strings.NewReplacer(replaceParts...).Replace(url)
 }
 
@@ -85,10 +85,6 @@ func (ws *webSocket) Close() {
 // Rel returns a relative url using window.location.href
 func Rel(p string) string {
 	href := godom.Global().Location().Href()
-	u, err := url.Parse(href)
-	// TODO: something better than panic?
-	if err != nil {
-		panic(err)
-	}
+	u, _ := url.Parse(href)
 	return fmt.Sprintf("%s://%s/%s", u.Scheme, u.Host, p)
 }
