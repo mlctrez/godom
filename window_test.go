@@ -1,6 +1,7 @@
 package godom
 
 import (
+	"github.com/stretchr/testify/assert"
 	"runtime"
 	"testing"
 )
@@ -27,10 +28,21 @@ func TestGlobal_Document(t *testing.T) {
 }
 
 func TestLocation_Href(t *testing.T) {
+	a := assert.New(t)
 	href := Global().Location().Href()
 	if runtime.GOOS == "linux" {
 		if "http://testserver" != href {
 			t.Error("unexpected href")
 		}
+	} else {
+		value := Global().Value()
+		a.Equal(value.Get("location").Get("href").String(), href)
 	}
+}
+
+func TestWindow_Console(t *testing.T) {
+	c := Global().Console()
+	c.Log("testing console log")
+	c.Error("testing console error")
+
 }
