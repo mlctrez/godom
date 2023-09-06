@@ -1,9 +1,5 @@
 package godom
 
-import (
-	"log"
-)
-
 // Window is defined as https://developer.mozilla.org/en-US/docs/Web/API/Window
 type Window interface {
 	ThisValue
@@ -54,15 +50,11 @@ type console struct {
 func (c *console) Log(args ...any) {
 	if c.this != nil {
 		c.this.Call("log", args...)
-	} else {
-		log.Println(args...)
 	}
 }
 
 func (c *console) Error(args ...any) {
 	if c.this != nil {
 		c.this.Call("error", args...)
-	} else {
-		log.Println(args...)
 	}
 }

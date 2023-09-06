@@ -44,5 +44,4 @@ func TestWindow_Console(t *testing.T) {
 	c := Global().Console()
 	c.Log("testing console log")
 	c.Error("testing console error")
-
 }

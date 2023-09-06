@@ -27,6 +27,10 @@ func (d *document) Api() Doc {
 }
 
 func (d *document) DocumentElement() Element {
+	if d.documentElement != nil {
+		return d.documentElement
+	}
+	d.documentElement = ElementFromValue(d.this.Get("documentElement"))
 	return d.documentElement
 }
 
@@ -40,7 +44,8 @@ func (d *document) Head() Element {
 }
 
 func (d *document) Body() Element {
-	nodes := d.DocumentElement().ChildNodes()
+	de := d.DocumentElement()
+	nodes := de.ChildNodes()
 	return findElement(nodes, "body", true)
 }
 
