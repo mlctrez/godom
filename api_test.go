@@ -3,6 +3,7 @@ package godom
 import (
 	"bytes"
 	"encoding/xml"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 )
@@ -55,6 +56,20 @@ func TestDoc_FromDecoder(t *testing.T) {
 		t.Fatal(enc)
 	}
 
+}
+
+func TestDoc_H(t *testing.T) {
+	req := require.New(t)
+	doc := Doc{Doc: Global().Document()}
+	html := `<div><button id="one">button text</button></div>`
+
+	req.Equal(html, doc.H(html).String())
+	req.Equal("<div style=\"color:red;\">EOF first token</div>", doc.H("").String())
+}
+
+func TestDocument_Api(t *testing.T) {
+	doc := Doc{Doc: Global().Document()}
+	doc.Doc.Api()
 }
 
 func testEncodeHelper(n Node) string {

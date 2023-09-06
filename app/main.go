@@ -5,7 +5,6 @@ import (
 	"fmt"
 	dom "github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/gws"
-	fetch "marwan.io/wasm-fetch"
 	"time"
 )
 
@@ -51,19 +50,19 @@ func (a *App) Run() {
 	document.Body().ReplaceWith(body)
 
 	<-a.ctx.Done()
-	a.tryReconnect()
+	//a.tryReconnect()
 }
 
-func (a *App) tryReconnect() {
-	endAt := time.Now().Add(time.Second * 5)
-	for {
-		if _, err := fetch.Fetch(a.l.Href(), &fetch.Opts{}); err == nil || time.Now().After(endAt) {
-			break
-		}
-		time.Sleep(time.Millisecond * time.Duration(500))
-	}
-	a.l.Reload()
-}
+//func (a *App) tryReconnect() {
+//	endAt := time.Now().Add(time.Second * 5)
+//	for {
+//		if _, err := fetch.Fetch(a.l.Href(), &fetch.Opts{}); err == nil || time.Now().After(endAt) {
+//			break
+//		}
+//		time.Sleep(time.Millisecond * time.Duration(500))
+//	}
+//	a.l.Reload()
+//}
 
 func (a *App) onBinary(message []byte) {
 	if string(message) == "wasm" {

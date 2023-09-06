@@ -27,10 +27,6 @@ func (d *document) Api() Doc {
 }
 
 func (d *document) DocumentElement() Element {
-	if d.documentElement != nil {
-		return d.documentElement
-	}
-	d.documentElement = ElementFromValue(d.this.Get("documentElement"))
 	return d.documentElement
 }
 

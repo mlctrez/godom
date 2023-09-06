@@ -68,7 +68,7 @@ func TestDocument_findElement_fail(t *testing.T) {
 	findElement(children, "bar", true)
 }
 
-func TestDocument_findElement_nopanic(t *testing.T) {
+func TestDocument_findElement_noPanic(t *testing.T) {
 	children := []Node{&node{nodeName: "foo"}}
 	e := findElement(children, "bar", false)
 	if e != nil {
