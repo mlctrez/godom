@@ -52,6 +52,7 @@ func (w *wasmWindow) Navigator() Navigator {
 	w.n.this = w.v.Get("navigator")
 	return w.n
 }
+
 func (w *wasmWindow) Location() Location {
 	if w.l != nil {
 		return w.l
@@ -60,6 +61,7 @@ func (w *wasmWindow) Location() Location {
 	w.l.this = w.v.Get("location")
 	return w.l
 }
+
 func (w *wasmWindow) Console() Console {
 	if w.c != nil {
 		return w.c

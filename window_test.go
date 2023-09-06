@@ -24,7 +24,6 @@ func TestGlobal_Document(t *testing.T) {
 	if ptr(d) != ptr(g.Document()) {
 		t.Fatal("multiple calls returned different object")
 	}
-
 }
 
 func TestLocation_Href(t *testing.T) {

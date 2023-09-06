@@ -4,6 +4,7 @@ package godom
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -16,12 +17,17 @@ func TestElement_NodeType(t *testing.T) {
 }
 
 func TestElement_SetAttribute(t *testing.T) {
+
+	a := assert.New(t)
+
 	doc := Doc{Doc: Global().Document()}
 	e := doc.El("html")
 	e.SetAttribute("foo", "bar")
-	if e.(*element).attributes[0].Name != "foo" {
-		t.Fatal("expected attribute not found")
-	}
+
+	a.Equal("foo", e.(*element).attributes[0].Name)
+
+	e.SetAttribute("onClick", "click")
+	a.Equal("click", e.This().Get("onClick").String())
 }
 
 func TestElement_Marshal(t *testing.T) {

@@ -75,7 +75,7 @@ func ElementFromValue(value Value) Element {
 	}
 	value.SetGoValue(e)
 
-	if value.Call("hasAttributes").Bool() {
+	if value.Get("hasAttributes").Truthy() && value.Call("hasAttributes").Bool() {
 		attributes := value.Get("attributes")
 		for i := 0; i < attributes.Length(); i++ {
 			attribute := attributes.Index(i)
@@ -85,7 +85,7 @@ func ElementFromValue(value Value) Element {
 		}
 	}
 
-	if value.Call("hasChildNodes").Bool() {
+	if value.Get("hasChildNodes").Truthy() && value.Call("hasChildNodes").Bool() {
 		children := value.Get("childNodes")
 		for i := 0; i < children.Length(); i++ {
 			child := children.Index(i)
