@@ -14,17 +14,25 @@ jobs:
       - name: Install dependencies
         run: |
           go mod download
+      - name: Install chrome
+        uses: browser-actions/setup-chrome@latest
       - name: Install wasmbrowsertest
         run: |
-          env
           git clone -b fs-api-forwarding https://github.com/mlctrez/wasmbrowsertest /tmp/wasmbrowsertest
-          ls -l /tmp/wasmbrowsertest
           go mod -C /tmp/wasmbrowsertest download
-          go build -C /tmp/wasmbrowsertest -o /tmp/go_js_wasm_exec
-          ls -l /tmp/go_js_wasm_exec
+          go build -C /tmp/wasmbrowsertest -o $(go env GOPATH)/bin/go_js_wasm_exec
       - name: Run Unit tests
         run: |
-          go test -race -covermode atomic -coverprofile=covprofile .
+          go test -race -covermode atomic -coverprofile=covprofile_nowasm .
+      - name: Run Unit tests using wasmbrowsertest
+        run: |
+          GOOS=js GOARCH=wasm go test -cover -test.coverprofile=covprofile_wasm .
+      - name: Install gocovmerge
+        run: |
+          go install github.com/wadey/gocovmerge@latest
+      - name: Merge coverage
+        run: |
+          gocovmerge covprofile_nowasm covprofile_wasm > covprofile
       - name: Install goveralls
         run: go install github.com/mattn/goveralls@latest
       - name: Send coverage
