@@ -40,3 +40,10 @@ func TestNode_String(t *testing.T) {
 		t.Fatalf("expected Node:node but got %q", n.String())
 	}
 }
+
+func TestNode_AddEventListener2(t *testing.T) {
+	target := Global().Document().DocumentElement()
+	release := target.AddEventListener("click", func(event Value) {
+	})
+	defer release()
+}

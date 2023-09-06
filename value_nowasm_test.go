@@ -2,7 +2,10 @@
 
 package godom
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestValue_Null(t *testing.T) {
 	v := ToValue(nil)
@@ -161,4 +164,14 @@ func TestValue_LengthNotArray(t *testing.T) {
 		}
 	}()
 	(&value{t: TypeObject}).Length()
+}
+
+func TestValue_Call(t *testing.T) {
+	a := assert.New(t)
+	var argPassed string
+	v := &value{t: TypeObject, data: map[string]interface{}{"targetFunction": func(s string) {
+		argPassed = s
+	}}}
+	v.Call("targetFunction", "theValue")
+	a.Equal("theValue", argPassed)
 }

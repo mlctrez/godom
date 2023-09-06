@@ -30,3 +30,28 @@ func TestToIntFail(t *testing.T) {
 	}()
 	ToInt("bad")
 }
+
+func TestToFloat(t *testing.T) {
+	as := assert.New(t)
+	as.True(ToFloat(0) == 0, "assertion failed int")
+	as.True(ToFloat(int8(0)) == 0, "assertion failed int8")
+	as.True(ToFloat(int16(0)) == 0, "assertion failed int16")
+	as.True(ToFloat(int32(0)) == 0, "assertion failed int32")
+	as.True(ToFloat(int64(0)) == 0, "assertion failed int64")
+	as.True(ToFloat(float32(0)) == 0, "assertion failed float32")
+	as.True(ToFloat(float64(0)) == 0, "assertion failed float64")
+}
+
+func TestToFloatFail(t *testing.T) {
+	req := require.New(t)
+	defer func() {
+		r := recover()
+		switch rt := r.(type) {
+		case error:
+			req.Equal("ToFloat failed for bad", rt.Error())
+		default:
+			req.Fail("recover did not produce and error")
+		}
+	}()
+	ToFloat("bad")
+}
