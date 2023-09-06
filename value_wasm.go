@@ -64,7 +64,7 @@ func (v *wasmValue) Equal(w Value) bool      { return v.jsv.Equal(w.(*wasmValue)
 func (v *wasmValue) InstanceOf(t Value) bool { return v.jsv.InstanceOf(t.(*wasmValue).jsv) }
 func (v *wasmValue) IsUndefined() bool       { return v.jsv.IsUndefined() }
 func (v *wasmValue) IsNull() bool            { return v.jsv.IsNull() }
-func (v *wasmValue) IsNaN() bool             { return v.IsNaN() }
+func (v *wasmValue) IsNaN() bool             { return v.jsv.IsNaN() }
 func (v *wasmValue) Type() Type              { return Type(v.jsv.Type()) }
 func (v *wasmValue) Length() int             { return v.jsv.Length() }
 func (v *wasmValue) Float() float64          { return v.jsv.Float() }
