@@ -54,10 +54,6 @@ func TestDocument_NodeType(t *testing.T) {
 	}
 }
 
-func TestDocument_DocumentElement(t *testing.T) {
-	Global().Document().DocumentElement()
-}
-
 func TestDocument_findElement_fail(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {

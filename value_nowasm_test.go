@@ -3,6 +3,7 @@
 package godom
 
 import (
+	"bytes"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -40,6 +41,7 @@ func TestValue_Number(t *testing.T) {
 }
 
 func TestValue_String(t *testing.T) {
+	a := assert.New(t)
 	b := "a string"
 	v := ToValue(b)
 	if v.Type() != TypeString {
@@ -48,6 +50,14 @@ func TestValue_String(t *testing.T) {
 	if v.String() != "a string" {
 		t.Fatal("string value incorrect")
 	}
+	a.Equal("undefined", (&value{t: TypeUndefined}).String())
+	a.Equal("null", (&value{t: TypeNull}).String())
+	a.Equal("map[]", (&value{t: TypeObject}).String())
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		(&value{t: TypeFunction}).String()
+	}()
 }
 
 func TestValue_Func(t *testing.T) {
@@ -168,10 +178,96 @@ func TestValue_LengthNotArray(t *testing.T) {
 
 func TestValue_Call(t *testing.T) {
 	a := assert.New(t)
+
 	var argPassed string
-	v := &value{t: TypeObject, data: map[string]interface{}{"targetFunction": func(s string) {
+	v := ToValue(map[string]interface{}{"targetFunction": func(s string) {
 		argPassed = s
-	}}}
+	}})
+
 	v.Call("targetFunction", "theValue")
 	a.Equal("theValue", argPassed)
+}
+
+func TestValue_Call_panics(t *testing.T) {
+	a := assert.New(t)
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		v := &value{t: TypeString}
+		v.Call("notObject", "")
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		v := &value{t: TypeObject}
+		v.Call("missingFunction", "")
+	}()
+}
+
+func TestValue_NotImplemented_panics(t *testing.T) {
+	a := assert.New(t)
+	nv := func() Value { return &value{t: TypeObject} }
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().Invoke()
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().New()
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().IsUndefined()
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().IsNaN()
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().Delete("")
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().InstanceOf(nil)
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().Bytes()
+	}()
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		nv().Int()
+	}()
+
+}
+
+func TestValue_Truthy(t *testing.T) {
+	a := assert.New(t)
+	a.False((&value{t: TypeUndefined}).Truthy())
+	a.False((&value{t: TypeNull}).Truthy())
+	a.True(ToValue(true).Truthy())
+	a.True(ToValue(1).Truthy())
+}
+
+func TestValue_Float(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(1.234, ToValue(1.234).Float())
+
+	func() {
+		defer func() { a.NotNil(recover()) }()
+		ToValue("not a float").Float()
+	}()
+}
+
+func TestInvoke(t *testing.T) {
+	buff := &bytes.Buffer{}
+	Invoke(buff, "WriteString", "testing")
+	assert.Equal(t, "testing", buff.String())
 }

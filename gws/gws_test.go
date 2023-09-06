@@ -87,5 +87,4 @@ func TestCloseFunc(t *testing.T) {
 	closeFunc := CloseFunc(func() { called = true })
 	closeFunc(CloseEvent{})
 	a.True(called)
-
 }

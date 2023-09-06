@@ -70,16 +70,13 @@ func ToValue(i interface{}) Value {
 	panic(fmt.Errorf("ToValue conversion failed for kind %s %s", reflect.TypeOf(i).Kind(), i))
 }
 
-func (v *value) JSValue() Value     { return v }
-func (v *value) Equal(w Value) bool { return ptr(w) == ptr(v) }
-func (v *value) IsUndefined() bool  { panic(IM) }
-func (v *value) IsNull() bool       { return v.t == TypeNull }
-func (v *value) IsNaN() bool        { panic(IM) }
-func (v *value) Type() Type         { return v.t }
-func (v *value) Get(p string) Value {
-	//log.Printf("Get(%q) = %v", p, v.data[p])
-	return ToValue(v.data[p])
-}
+func (v *value) JSValue() Value              { return v }
+func (v *value) Equal(w Value) bool          { return ptr(w) == ptr(v) }
+func (v *value) IsUndefined() bool           { panic(IM) }
+func (v *value) IsNull() bool                { return v.t == TypeNull }
+func (v *value) IsNaN() bool                 { panic(IM) }
+func (v *value) Type() Type                  { return v.t }
+func (v *value) Get(p string) Value          { return ToValue(v.data[p]) }
 func (v *value) Set(p string, x interface{}) { v.set(p, x) }
 func (v *value) Delete(p string)             { panic(IM) }
 
@@ -122,10 +119,7 @@ func (v *value) Call(m string, args ...interface{}) Value {
 }
 
 func (v *value) Invoke(args ...interface{}) Value { panic(IM) }
-func (v *value) New(args ...interface{}) Value {
-
-	panic(IM)
-}
+func (v *value) New(args ...interface{}) Value    { panic(IM) }
 
 func (v *value) Float() float64 {
 	switch v.t {
@@ -172,13 +166,9 @@ func (v *value) String() string {
 	panic(fmt.Errorf("type %d String() not implemented", v.t))
 }
 
-func (v *value) InstanceOf(t Value) bool {
-	panic(IM)
-}
+func (v *value) InstanceOf(t Value) bool { panic(IM) }
 
-func (v *value) Bytes() []byte {
-	panic(IM)
-}
+func (v *value) Bytes() []byte { panic(IM) }
 
 // Invoke is a sample demonstrating go reflection.
 func Invoke(any interface{}, name string, args ...interface{}) {
