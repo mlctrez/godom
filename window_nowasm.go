@@ -19,7 +19,7 @@ func Global() Window {
 		wv.set("document", initialDocument())
 		wv.set("console", initialConsole())
 		wv.set("location", initialLocation())
-		wv.set("navigator", initialNaviator())
+		wv.set("navigator", initialNavigator())
 		globalWindow = &window{this: wv}
 		wv.SetGoValue(globalWindow)
 	}
@@ -42,7 +42,7 @@ func elementValue(d *document, ns, nodeName string) *value {
 	return e
 }
 
-func initialNaviator() Value {
+func initialNavigator() Value {
 	n := &navigator{}
 	v := valueT(TypeObject)
 	n.this = v
