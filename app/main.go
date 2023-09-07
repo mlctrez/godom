@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	dom "github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/gws"
@@ -22,36 +23,38 @@ type App struct {
 // Run is the main entry point
 func (a *App) Run() {
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
-	a.c = dom.Global().Console()
-	a.l = dom.Global().Location()
+	g := dom.Global()
+	a.c = g.Console()
+	a.l = g.Location()
 
 	a.c.Log("startup")
 	go a.monitorServer()
 
-	document := dom.Global().Document()
+	document := g.Document()
 	doc := dom.Doc{Doc: document}
 
 	var body dom.Node
 	body = doc.El("body")
 	p := doc.El("p")
-	p.AppendChild(doc.Doc.CreateTextNode("click 2"))
+	p.AppendChild(doc.Doc.CreateTextNode("click here to close websocket"))
+	p.AddEventListener("click", func(event dom.Value) {
+
+		a.ws.Close()
+	})
+
 	removedDiv := doc.El("div")
 	removedDiv.AppendChild(p)
 	body.AppendChild(removedDiv)
 
-	buttonOne := doc.H(`<button>click me</button>`)
+	buttonOne := doc.H(`<button>click to remove div</button>`)
 	buttonOne.AddEventListener("click", func(event dom.Value) {
 		a.c.Log("button one", event)
 		removedDiv.Remove()
 	})
-	body.AppendChild(buttonOne)
-	body.AddEventListener("click", func(event dom.Value) {
-		fmt.Println("closing web socket")
-		//a.ws.Close()
-	})
 
-	bodyActual := document.Body()
-	bodyActual.ReplaceWith(body)
+	body.AppendChild(buttonOne)
+
+	document.Body().ReplaceWith(body)
 
 	<-a.ctx.Done()
 	a.tryReconnect()

@@ -1,4 +1,4 @@
-//go:build !awasm
+//go:build !wasm
 
 package godom
 

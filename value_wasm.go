@@ -30,6 +30,8 @@ func ToJsValue(arg interface{}) interface{} {
 		return ToJsValue(v.v)
 	case *wasmValue:
 		return v.jsv
+	case *wasmFunc:
+		return v.jsf
 	case *navigator:
 		return ToJsValue(v.this)
 	case *document:

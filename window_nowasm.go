@@ -19,6 +19,7 @@ func Global() Window {
 		wv.set("document", initialDocument())
 		wv.set("console", initialConsole())
 		wv.set("location", initialLocation())
+		wv.set("navigator", initialNaviator())
 		globalWindow = &window{this: wv}
 		wv.SetGoValue(globalWindow)
 	}
@@ -39,6 +40,14 @@ func elementValue(d *document, ns, nodeName string) *value {
 	e.set("appendChild", func(v Value) {})
 	e.set("setAttribute", func(name string, value interface{}) {})
 	return e
+}
+
+func initialNaviator() Value {
+	n := &navigator{}
+	v := valueT(TypeObject)
+	n.this = v
+	v.SetGoValue(v)
+	return v
 }
 
 func initialConsole() Value {

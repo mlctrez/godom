@@ -27,6 +27,12 @@ func TestGlobal_Document(t *testing.T) {
 	}
 }
 
+func TestLocation_Reload_Linux(t *testing.T) {
+	if runtime.GOOS == "linux" {
+		Global().Location().Reload()
+	}
+}
+
 func TestLocation_Href(t *testing.T) {
 	a := assert.New(t)
 	href := Global().Location().Href()
@@ -44,4 +50,14 @@ func TestWindow_Console(t *testing.T) {
 	c := Global().Console()
 	c.Log("testing console log")
 	c.Error("testing console error")
+}
+
+func TestWindow_Navigator(t *testing.T) {
+	a := assert.New(t)
+	a.NotNil(Global().Navigator())
+}
+
+func TestWindow_Value(t *testing.T) {
+	a := assert.New(t)
+	a.NotNil(Global().Value())
 }
