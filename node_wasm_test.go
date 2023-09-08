@@ -11,13 +11,13 @@ func TestNode_AddEventListener(t *testing.T) {
 
 	var eventHappened Value
 
-	d := Global().Document()
+	d := Document()
 	release := d.AddEventListener("click", func(event Value) {
 		eventHappened = event
 	})
 	defer release()
 
-	d.This().Call("dispatchEvent", Global().Value().Get("Event").New("click"))
+	d.This().Call("dispatchEvent", Global().Get("Event").New("click"))
 	a.NotNil(eventHappened)
 
 	a.Equal("click", eventHappened.Get("type").String())

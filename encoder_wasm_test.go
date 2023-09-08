@@ -2,6 +2,7 @@ package godom
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -24,7 +25,7 @@ func TestEncoder_Indent(t *testing.T) {
 	exp := `<html>
   <meta/>
 </html>`
-	d := Global().Document()
+	d := Document()
 	html := d.CreateElement("html")
 	html.AppendChild(d.CreateElement("meta"))
 
@@ -39,7 +40,7 @@ func TestEncoder_Indent(t *testing.T) {
 
 func TestEncoder_AttributesEncoded(t *testing.T) {
 	exp := `<html lang="EN"/>`
-	d := Global().Document()
+	d := Document()
 	html := d.CreateElement("html")
 	html.SetAttribute("lang", "EN")
 
@@ -53,7 +54,7 @@ func TestEncoder_AttributesEncoded(t *testing.T) {
 
 func TestEncoder_Text(t *testing.T) {
 	exp := `<html>some text</html>`
-	d := Global().Document()
+	d := Document()
 	html := d.CreateElement("html")
 	html.AppendChild(d.CreateTextNode("some text"))
 
@@ -75,5 +76,12 @@ func TestEncoder_lookBack(t *testing.T) {
 	if back != nil {
 		t.Fatal("lookBack test for nil failed")
 	}
+}
+
+func TestEncoder_shouldClose(t *testing.T) {
+	a := assert.New(t)
+	api := Document().DocApi()
+	a.Equal("<p/>", api.El("p").String())
+	a.Equal("<script></script>", api.El("script").String())
 
 }

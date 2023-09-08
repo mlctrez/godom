@@ -26,20 +26,12 @@ func ToJsValue(arg interface{}) interface{} {
 		return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			return v(FromJsValue(this), FromJsValues(args...))
 		})
-	case *wasmWindow:
-		return ToJsValue(v.v)
 	case *wasmValue:
 		return v.jsv
 	case *wasmFunc:
 		return v.jsf
-	case *navigator:
-		return ToJsValue(v.this)
 	case *document:
-		return ToJsValue(v.this)
-	case *location:
-		return ToJsValue(v.this)
-	case *console:
-		return ToJsValue(v.this)
+		return v.this
 	default:
 		return js.ValueOf(v)
 	}

@@ -3,21 +3,21 @@ package godom
 import (
 	"bytes"
 	"encoding/xml"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 )
 
 func TestDoc_El(t *testing.T) {
-	doc := Doc{Doc: Global().Document()}
+	a := assert.New(t)
+	doc := Document().DocApi()
 	html := doc.El("html", doc.At("lang", "en"))
-	if html.NodeName() != "html" {
-		t.Fatal("html node name not set correctly")
-	}
+	a.Equal("html", html.NodeName())
 }
 
 func TestDoc_At(t *testing.T) {
-	doc := Doc{Doc: Global().Document()}
+	doc := Document().DocApi()
 	at := doc.At("name", "wasmValue")
 	if at.Name != "name" {
 		t.Fatal("name not set correctly")
@@ -28,7 +28,7 @@ func TestDoc_At(t *testing.T) {
 }
 
 func TestDoc_FromDecoder(t *testing.T) {
-	doc := Doc{Doc: Global().Document()}
+	doc := Document().DocApi()
 	decodeString := func(s string) (Node, error) {
 		return doc.Decode(xml.NewDecoder(bytes.NewBufferString(s)))
 	}
@@ -60,16 +60,11 @@ func TestDoc_FromDecoder(t *testing.T) {
 
 func TestDoc_H(t *testing.T) {
 	req := require.New(t)
-	doc := Doc{Doc: Global().Document()}
+	doc := Document().DocApi()
 	html := `<div><button id="one">button text</button></div>`
 
 	req.Equal(html, doc.H(html).String())
 	req.Equal("<div style=\"color:red;\">EOF first token</div>", doc.H("").String())
-}
-
-func TestDocument_Api(t *testing.T) {
-	doc := Doc{Doc: Global().Document()}
-	doc.Doc.Api()
 }
 
 func testEncodeHelper(n Node) string {
@@ -82,7 +77,7 @@ func testEncodeHelper(n Node) string {
 
 func TestDoc_directive(t *testing.T) {
 
-	doc := Doc{Doc: Global().Document()}
+	doc := Document().DocApi()
 	decodeString := func(s string) (Node, error) {
 		return doc.Decode(xml.NewDecoder(bytes.NewBufferString(s)))
 	}

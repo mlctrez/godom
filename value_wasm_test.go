@@ -8,12 +8,12 @@ import (
 
 func TestValue_GetSet(t *testing.T) {
 	a := assert.New(t)
-	global := Global().Value()
+	g := Global()
 
-	a.True(global.Get("undefinedValue").IsUndefined())
+	a.True(g.Get("undefinedValue").IsUndefined())
 
-	global.Set("definedValue", "abc123")
-	dv := global.Get("definedValue")
+	g.Set("definedValue", "abc123")
+	dv := g.Get("definedValue")
 	a.True(!dv.IsUndefined())
 	a.True(dv.Type() == TypeString)
 	a.Equal("abc123", dv.String())
@@ -21,7 +21,7 @@ func TestValue_GetSet(t *testing.T) {
 
 func TestValue_GetSetFunc(t *testing.T) {
 	a := assert.New(t)
-	global := Global().Value()
+	g := Global()
 
 	var invokeArgs []Value
 
@@ -29,8 +29,8 @@ func TestValue_GetSetFunc(t *testing.T) {
 		invokeArgs = args
 		return nil
 	})
-	global.Set("testFunction", aFunc)
-	dv := global.Get("testFunction")
+	g.Set("testFunction", aFunc)
+	dv := g.Get("testFunction")
 	a.True(!dv.IsUndefined())
 	a.True(dv.Type() == TypeFunction)
 	dv.Invoke("testing")
@@ -38,8 +38,8 @@ func TestValue_GetSetFunc(t *testing.T) {
 	a.True(len(invokeArgs) == 1)
 	a.Equal("testing", invokeArgs[0].String())
 
-	global.Delete("testFunction")
-	dv = global.Get("testFunction")
+	g.Delete("testFunction")
+	dv = g.Get("testFunction")
 	a.True(dv.IsUndefined())
 }
 
@@ -47,32 +47,27 @@ func TestToJsValue(t *testing.T) {
 	a := assert.New(t)
 	g := Global()
 	a.IsType(js.Value{}, ToJsValue(g))
-	a.IsType(js.Value{}, ToJsValue(g.Location()))
-	a.IsType(js.Value{}, ToJsValue(g.Navigator()))
-	a.IsType(js.Value{}, ToJsValue(g.Document()))
-	a.IsType(js.Value{}, ToJsValue(g.Console()))
 }
 
 func TestWasmValue_GoValue(t *testing.T) {
 	a := assert.New(t)
 	g := Global()
-	value := g.Value()
-	value.SetGoValue(g)
-	a.IsType(&wasmWindow{}, value.GoValue())
+	g.SetGoValue(g)
+	a.IsType(&wasmValue{}, g.GoValue())
 }
 
 func TestWasmValue_IsNaN(t *testing.T) {
 	a := assert.New(t)
-	value := Global().Value()
-	value.Set("thisIsNotANumber", value.Get("NaN"))
-	a.True(value.Get("thisIsNotANumber").IsNaN())
+	g := Global()
+	g.Set("thisIsNotANumber", g.Get("NaN"))
+	a.True(g.Get("thisIsNotANumber").IsNaN())
 }
 
 func TestWasmValue_Array(t *testing.T) {
 	a := assert.New(t)
-	value := Global().Value()
-	value.Set("testArray", value.Get("Array").New("a", "b", "c"))
-	testArray := value.Get("testArray")
+	g := Global()
+	g.Set("testArray", g.Get("Array").New("a", "b", "c"))
+	testArray := g.Get("testArray")
 	a.True(testArray.Length() == 3)
 	a.True(testArray.Index(0).String() == "a")
 	testArray.SetIndex(0, "new")
@@ -81,38 +76,38 @@ func TestWasmValue_Array(t *testing.T) {
 
 func TestWasmValue_Equal(t *testing.T) {
 	a := assert.New(t)
-	value := Global().Value()
-	value.Set("testArray", value.Get("Array").New("a", "b", "c"))
-	testArray := value.Get("testArray")
-	a.True(testArray.Equal(value.Get("testArray")))
+	g := Global()
+	g.Set("testArray", g.Get("Array").New("a", "b", "c"))
+	testArray := g.Get("testArray")
+	a.True(testArray.Equal(g.Get("testArray")))
 }
 
 func TestWasmValue_InstanceOf(t *testing.T) {
 	a := assert.New(t)
-	value := Global().Value()
-	value.Set("testArray", value.Get("Array").New("a", "b", "c"))
-	testArray := value.Get("testArray")
-	a.True(testArray.InstanceOf(value.Get("Array")))
+	g := Global()
+	g.Set("testArray", g.Get("Array").New("a", "b", "c"))
+	testArray := g.Get("testArray")
+	a.True(testArray.InstanceOf(g.Get("Array")))
 }
 
 func TestWasmValue_Bytes(t *testing.T) {
 	a := assert.New(t)
-	value := Global().Value()
-	value.Set("testArray", value.Get("Array").New(0, 1, 2, 3))
-	testArray := value.Get("testArray")
+	g := Global()
+	g.Set("testArray", g.Get("Array").New(0, 1, 2, 3))
+	testArray := g.Get("testArray")
 	bytes := testArray.Bytes()
 	a.True(len(bytes) == 4)
 }
 
 func TestWasmValue_JsValue(t *testing.T) {
 	a := assert.New(t)
-	value := Global().Value()
-	a.True(value.Equal(value.JSValue()))
+	g := Global()
+	a.True(g.Equal(g.JSValue()))
 }
 
 func TestWasmValue_Float(t *testing.T) {
 	a := assert.New(t)
-	g := Global().Value()
+	g := Global()
 	var floatValue = 123.456
 	g.Set("testFloatValue", floatValue)
 	a.Equal(floatValue, g.Get("testFloatValue").Float())
@@ -120,7 +115,7 @@ func TestWasmValue_Float(t *testing.T) {
 
 func TestWasmValue_Int(t *testing.T) {
 	a := assert.New(t)
-	g := Global().Value()
+	g := Global()
 	var intValue = 123456
 	g.Set("testIntValue", intValue)
 	a.Equal(intValue, g.Get("testIntValue").Int())

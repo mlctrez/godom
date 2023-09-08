@@ -26,7 +26,7 @@ func defaultBinary(_ []byte) {}
 
 func New(url string, protocols ...string) WebSocket {
 	p := convert.StringsAny(protocols...)
-	value := godom.Global().Value().Get("WebSocket").New(wsUrl(url), p)
+	value := godom.Global().Get("WebSocket").New(wsUrl(url), p)
 	value.Set("binaryType", "arraybuffer")
 
 	imp := &webSocket{v: value, text: defaultText, binary: defaultBinary}
@@ -84,7 +84,7 @@ func (ws *webSocket) Close() {
 
 // Rel returns a relative url using window.location.href
 func Rel(p string) string {
-	href := godom.Global().Location().Href()
+	href := godom.Global().Get("location").Get("href").String()
 	u, _ := url.Parse(href)
 	return fmt.Sprintf("%s://%s/%s", u.Scheme, u.Host, p)
 }

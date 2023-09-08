@@ -7,36 +7,30 @@ import (
 	_ "embed"
 	"fmt"
 	dom "github.com/mlctrez/godom"
+	"github.com/mlctrez/godom/gfet"
 	"github.com/mlctrez/godom/gws"
-	fetch "marwan.io/wasm-fetch"
 	"time"
 )
 
 type App struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
-	c         dom.Console
-	l         dom.Location
 	ws        gws.WebSocket
 }
 
 // Run is the main entry point
 func (a *App) Run() {
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
-	g := dom.Global()
-	a.c = g.Console()
-	a.l = g.Location()
 
-	a.c.Log("startup")
 	go a.monitorServer()
 
-	document := g.Document()
-	doc := dom.Doc{Doc: document}
+	document := dom.Document()
+	doc := dom.Document().DocApi()
 
 	var body dom.Node
 	body = doc.El("body")
 	p := doc.El("p")
-	p.AppendChild(doc.Doc.CreateTextNode("click here to close websocket"))
+	p.AppendChild(document.CreateTextNode("click here to close websocket"))
 	p.AddEventListener("click", func(event dom.Value) {
 
 		a.ws.Close()
@@ -48,13 +42,15 @@ func (a *App) Run() {
 
 	buttonOne := doc.H(`<button>click to remove div</button>`)
 	buttonOne.AddEventListener("click", func(event dom.Value) {
-		a.c.Log("button one", event)
+		fmt.Println("button one")
 		removedDiv.Remove()
 	})
 
 	body.AppendChild(buttonOne)
 
-	document.Body().ReplaceWith(body)
+	dom.ElementFromValue(document.This().Get("body")).ReplaceWith(body)
+
+	//document.Body().ReplaceWith(body)
 
 	<-a.ctx.Done()
 	a.tryReconnect()
@@ -63,12 +59,13 @@ func (a *App) Run() {
 func (a *App) tryReconnect() {
 	endAt := time.Now().Add(time.Second * 5)
 	for {
-		if _, err := fetch.Fetch(a.l.Href(), &fetch.Opts{}); err == nil || time.Now().After(endAt) {
+		href := dom.Global().Get("location").Get("href").String()
+		if _, err := gfet.Fetch(&gfet.Request{URL: href}); err == nil || time.Now().After(endAt) {
 			break
 		}
 		time.Sleep(time.Millisecond * time.Duration(500))
 	}
-	a.l.Reload()
+	dom.Global().Get("location").Call("reload")
 }
 
 func (a *App) onBinary(message []byte) {

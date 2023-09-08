@@ -75,6 +75,9 @@ func TestWebSocket_messageHandlers(t *testing.T) {
 }
 
 func TestRel(t *testing.T) {
+	if runtime.GOOS != "js" {
+		return
+	}
 	a := assert.New(t)
 	rel := Rel("ws")
 	a.True(strings.HasPrefix(rel, "http://"))

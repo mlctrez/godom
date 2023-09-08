@@ -43,6 +43,18 @@ func (d *node) Marshal(enc Encoder) Encoder {
 	return enc
 }
 
+func (d *node) AddEventListener(eventType string, fn OnEvent) func() {
+	jsFunc := FuncOf(func(this Value, args []Value) any {
+		fn(args[0])
+		return nil
+	})
+	d.this.Call("addEventListener", eventType, jsFunc)
+	return func() {
+		d.this.Call("removeEventListener", eventType, jsFunc)
+		jsFunc.Release()
+	}
+}
+
 func (d *node) String() string {
 	return fmt.Sprintf("Node:%s", d.nodeName)
 }

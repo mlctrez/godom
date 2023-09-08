@@ -23,7 +23,7 @@ func TestNode_NodeType(t *testing.T) {
 
 func TestNode_AppendChild(t *testing.T) {
 
-	doc := Doc{Doc: Global().Document()}
+	doc := Document().DocApi()
 	e := doc.El("html")
 	e.AppendChild(doc.El("body"))
 	if len(e.ChildNodes()) != 1 {
@@ -39,11 +39,4 @@ func TestNode_String(t *testing.T) {
 	if n.String() != "Node:node" {
 		t.Fatalf("expected Node:node but got %q", n.String())
 	}
-}
-
-func TestNode_AddEventListener2(t *testing.T) {
-	target := Global().Document().DocumentElement()
-	release := target.AddEventListener("click", func(event Value) {
-	})
-	defer release()
 }

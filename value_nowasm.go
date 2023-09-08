@@ -11,17 +11,28 @@ import (
 
 var _ Value = (*value)(nil)
 
+type dataMap map[string]interface{}
+
 type value struct {
 	t Type
 	// data contains the backing value
-	data map[string]interface{}
+	data dataMap
 	gov  interface{}
 }
 
 func (v *value) GoValue() interface{}      { return v.gov }
 func (v *value) SetGoValue(gv interface{}) { v.gov = gv }
 
-func valueT(t Type) *value { return &value{t: t} }
+func valueT(t Type, data ...dataMap) *value {
+	v := &value{t: t, data: dataMap{}}
+	v.gov = v
+	for _, dm := range data {
+		for key, value := range dm {
+			v.data[key] = value
+		}
+	}
+	return v
+}
 
 func (v *value) set(key string, val interface{}) *value {
 	if v.data == nil {

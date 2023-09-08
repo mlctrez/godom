@@ -21,7 +21,7 @@ func TestFuncOf(t *testing.T) {
 
 	// for now this test is only good on js
 	if runtime.GOOS == "js" {
-		global := Global().Value()
+		global := Global()
 		global.Set("valueForTestFuncOf", fn)
 		global.Call("valueForTestFuncOf", "a", "b")
 		a.NotNil(thisInvoked)

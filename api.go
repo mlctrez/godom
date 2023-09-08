@@ -10,12 +10,12 @@ import (
 
 // Doc is a helper class for working with the Document interface.
 type Doc struct {
-	Doc Document
+	Doc Value
 }
 
 // El creates a new element with optional attributes.
 func (d Doc) El(tag string, attributes ...*Attribute) Element {
-	c := d.Doc.CreateElement(tag)
+	c := ElementFromValue(d.Doc.Call("createElement", tag))
 	for _, a := range attributes {
 		c.SetAttribute(a.Name, a.Value)
 	}
@@ -29,7 +29,7 @@ func (d Doc) At(name string, value interface{}) *Attribute {
 
 // T creates a new text with optional attributes.
 func (d Doc) T(text string) Text {
-	return d.Doc.CreateTextNode(text)
+	return TextFromValue(d.Doc.Call("createTextNode", text))
 }
 
 func (d Doc) H(html string) Node {

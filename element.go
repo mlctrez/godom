@@ -25,10 +25,10 @@ func (e *element) ReplaceWith(n Node) {
 }
 
 func (e *element) SetAttribute(name string, value interface{}) {
-	if strings.HasPrefix(name, "on") {
-		e.this.Set(name, value)
-		return
-	}
+	//if strings.HasPrefix(name, "on") {
+	//	e.this.Set(name, value)
+	//	return
+	//}
 	e.attributes = append(e.attributes, &Attribute{Name: name, Value: value})
 	e.this.Call("setAttribute", name, value)
 	e.attributes.SortByName()
@@ -53,10 +53,7 @@ func (e *element) Marshal(enc Encoder) Encoder {
 }
 
 func (e *element) isAlwaysClose() bool {
-	if e.nodeName == "script" {
-		return true
-	}
-	return false
+	return e.nodeName == "script"
 }
 
 func (e *element) String() string {
@@ -65,7 +62,6 @@ func (e *element) String() string {
 }
 
 func ElementFromValue(value Value) Element {
-
 	e := &element{}
 	e.this = value
 	nodeName := value.Get("nodeName").String()
