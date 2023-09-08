@@ -49,6 +49,8 @@ func (d *document) Body() Element {
 }
 
 func Document() DocumentApi {
-	value := Global().Get("window").Get("document")
-	return &document{node{this: value}}
+	docElement := Global().Get("window").Get("document")
+	d := &document{node{this: docElement}}
+	d.node.children = d.DocumentElement().ChildNodes()
+	return d
 }
