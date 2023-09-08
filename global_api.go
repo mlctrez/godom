@@ -36,6 +36,7 @@ func (d *document) CreateTextNode(text string) Text {
 }
 
 func (d *document) DocumentElement() Element {
+	// TODO: appropriate caching
 	return ElementFromValue(d.this.Get("documentElement"))
 }
 

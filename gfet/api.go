@@ -97,6 +97,8 @@ func Fetch(r *Request) (res *Response, err error) {
 	f.ctx, f.cancelFunc = context.WithCancel(context.TODO())
 	defer f.release()
 
+	// TODO: use context with timeout and cancel fetch
+
 	global := godom.Global()
 	optionsMap := global.Get("Object").New()
 	if r.Headers != nil {

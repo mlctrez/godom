@@ -1,5 +1,3 @@
-//go:build js && wasm
-
 package main
 
 import (
@@ -32,7 +30,6 @@ func (a *App) Run() {
 	p := doc.El("p")
 	p.AppendChild(document.CreateTextNode("click here to close websocket"))
 	p.AddEventListener("click", func(event dom.Value) {
-
 		a.ws.Close()
 	})
 
@@ -48,9 +45,7 @@ func (a *App) Run() {
 
 	body.AppendChild(buttonOne)
 
-	dom.ElementFromValue(document.This().Get("body")).ReplaceWith(body)
-
-	//document.Body().ReplaceWith(body)
+	document.Body().ReplaceWith(body)
 
 	<-a.ctx.Done()
 	a.tryReconnect()
@@ -90,7 +85,6 @@ func (a *App) monitorServer() {
 				return
 			case <-pingTicker.C:
 				if err := a.ws.SendBinary([]byte("keepalive")); err != nil {
-					fmt.Println("error on send", err)
 					a.ctxCancel()
 					return
 				}
