@@ -38,17 +38,18 @@ func (d *document) CreateTextNode(text string) Text {
 func (d *document) DocumentElement() Element {
 	return ElementFromValue(d.this.Get("documentElement"))
 }
-func (d *document) Body() Element {
+
+func (d *document) Body() (body Element) {
 	for _, child := range d.DocumentElement().ChildNodes() {
 		if child.NodeName() == "body" {
-			//panic("got a child " + child.NodeName())
-			return child.(*element)
+			body = child.(*element)
 		}
 	}
-	panic("unable to find body")
+	return
 }
 
 func Document() DocumentApi {
+	// TODO: appropriate caching
 	docElement := Global().Get("window").Get("document")
 	d := &document{node{this: docElement}}
 	d.node.children = d.DocumentElement().ChildNodes()

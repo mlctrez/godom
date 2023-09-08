@@ -271,3 +271,30 @@ func TestInvoke(t *testing.T) {
 	Invoke(buff, "WriteString", "testing")
 	assert.Equal(t, "testing", buff.String())
 }
+
+func TestValue_set_nil(t *testing.T) {
+	a := assert.New(t)
+	v := &value{}
+	// should not fail for nil v.data
+	v.Set("a", "b")
+	a.Equal("b", v.data["a"])
+}
+
+func TestToValue_Value_slice(t *testing.T) {
+	a := assert.New(t)
+	toValue := ToValue([]Value{})
+	a.IsType([]Value{}, toValue.(*value).data["array"])
+}
+
+func TestToValue_panic(t *testing.T) {
+	a := assert.New(t)
+	defer func() { a.NotNil(recover()) }()
+	ToValue([]float64{})
+}
+
+func TestValue_GoValue(t *testing.T) {
+	a := assert.New(t)
+	v := valueT(TypeObject)
+	v.SetGoValue(v)
+	a.IsType(v, v.GoValue())
+}

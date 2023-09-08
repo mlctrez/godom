@@ -31,7 +31,7 @@ func ToJsValue(arg interface{}) interface{} {
 	case *wasmFunc:
 		return v.jsf
 	case *document:
-		return v.this
+		return ToJsValue(v.this)
 	default:
 		return js.ValueOf(v)
 	}

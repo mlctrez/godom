@@ -48,8 +48,6 @@ func ToValue(i interface{}) Value {
 	switch v := i.(type) {
 	case Value:
 		return v
-	case *element:
-		return v.this
 	case nil:
 		return valueT(TypeNull)
 	case bool:
@@ -81,17 +79,15 @@ func ToValue(i interface{}) Value {
 	panic(fmt.Errorf("ToValue conversion failed for kind %s %s", reflect.TypeOf(i).Kind(), i))
 }
 
-func (v *value) JSValue() Value     { return v }
-func (v *value) Equal(w Value) bool { return ptr(w) == ptr(v) }
-func (v *value) IsUndefined() bool  { panic(IM) }
-func (v *value) IsNull() bool       { return v.t == TypeNull }
-func (v *value) IsNaN() bool        { panic(IM) }
-func (v *value) Type() Type         { return v.t }
-func (v *value) Get(p string) Value { return ToValue(v.data[p]) }
-func (v *value) Set(p string, x interface{}) {
-	v.set(p, x)
-}
-func (v *value) Delete(p string) { panic(IM) }
+func (v *value) JSValue() Value              { return v }
+func (v *value) Equal(w Value) bool          { return ptr(w) == ptr(v) }
+func (v *value) IsUndefined() bool           { panic(IM) }
+func (v *value) IsNull() bool                { return v.t == TypeNull }
+func (v *value) IsNaN() bool                 { panic(IM) }
+func (v *value) Type() Type                  { return v.t }
+func (v *value) Get(p string) Value          { return ToValue(v.data[p]) }
+func (v *value) Set(p string, x interface{}) { v.set(p, x) }
+func (v *value) Delete(p string)             { panic(IM) }
 
 func (v *value) Index(i int) Value {
 	if i < 0 || i+1 > v.Length() {

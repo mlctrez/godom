@@ -9,6 +9,7 @@ import (
 type Element interface {
 	Node
 	Remove()
+	RemoveChild(child Value)
 	SetAttribute(name string, value interface{})
 	ReplaceWith(replacement Node)
 }
@@ -36,6 +37,10 @@ func (e *element) SetAttribute(name string, value interface{}) {
 
 func (e *element) NodeType() NodeType {
 	return NodeTypeElement
+}
+
+func (e *element) RemoveChild(child Value) {
+	e.this.Call("removeChild", child)
 }
 
 func (e *element) Remove() {

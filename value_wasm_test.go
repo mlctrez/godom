@@ -45,8 +45,8 @@ func TestValue_GetSetFunc(t *testing.T) {
 
 func TestToJsValue(t *testing.T) {
 	a := assert.New(t)
-	g := Global()
-	a.IsType(js.Value{}, ToJsValue(g))
+	a.IsType(js.Value{}, ToJsValue(Global()))
+	a.IsType(js.Value{}, ToJsValue(Document()))
 }
 
 func TestWasmValue_GoValue(t *testing.T) {

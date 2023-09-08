@@ -21,47 +21,59 @@ func TestDocument_CreateElementNS(t *testing.T) {
 	a.Equal("div", el.NodeName())
 }
 
-//func TestElement_Remove(t *testing.T) {
-//
-//	name := t.Name()
-//
-//	a := assert.New(t)
-//	d := Document()
-//	div := d.DocApi().El("div", &Attribute{Name: "id", Value: name})
-//
-//	body := d.Body()
-//	body.AppendChild(div)
-//
-//	os.MkdirAll("/tmp/element_test", 0755)
-//	os.WriteFile("/tmp/element_test/body1.html", []byte(body.String()), 0644)
-//
-//	testingDiv := d.This().Call("getElementById", name)
-//	a.True(!testingDiv.IsUndefined())
-//
-//	div.Remove()
-//
-//	testingDiv = d.This().Call("getElementById", name)
-//	a.True(testingDiv.IsUndefined())
-//
-//}
-//
-//func TestElement_ReplaceWith(t *testing.T) {
-//	a := assert.New(t)
-//	d := Document()
-//	divOne := d.DocApi().El("div")
-//	divOne.SetAttribute("id", "testingDivOne")
-//
-//	divTwo := d.DocApi().El("div")
-//	divTwo.SetAttribute("id", "testingDivTwo")
-//
-//	body := d.Body()
-//	body.AppendChild(divOne)
-//
-//	a.True(!d.This().Call("getElementById", "testingDivOne").IsUndefined())
-//
-//	divOne.ReplaceWith(divTwo)
-//
-//	a.True(d.This().Call("getElementById", "testingDivOne").IsUndefined())
-//	a.True(!d.This().Call("getElementById", "testingDivTwo").IsUndefined())
-//
-//}
+func TestElement_Remove(t *testing.T) {
+
+	name := t.Name()
+
+	a := assert.New(t)
+	d := Document()
+	div := d.DocApi().El("div", &Attribute{Name: "id", Value: name})
+
+	isNull := func(elementId string) bool {
+		return d.This().Call("getElementById", elementId).IsNull()
+	}
+
+	a.True(isNull(name))
+	body := d.Body()
+	body.AppendChild(div)
+	a.False(isNull(name))
+
+	body.RemoveChild(div.This())
+	a.True(isNull(name))
+
+	body.AppendChild(div)
+	a.False(isNull(name))
+	div.Remove()
+	a.True(isNull(name))
+
+}
+
+func TestElement_ReplaceWith(t *testing.T) {
+	a := assert.New(t)
+	d := Document()
+	divOne := d.DocApi().El("div")
+	divOneId := t.Name() + "One"
+	divOne.SetAttribute("id", divOneId)
+
+	divTwo := d.DocApi().El("div")
+	divTwoId := t.Name() + "Two"
+	divTwo.SetAttribute("id", divTwoId)
+
+	isNull := func(elementId string) bool {
+		return d.This().Call("getElementById", elementId).IsNull()
+	}
+
+	a.True(isNull(divOneId))
+	a.True(isNull(divTwoId))
+	body := d.Body()
+	body.AppendChild(divOne)
+
+	a.True(!isNull(divOneId))
+	a.True(isNull(divTwoId))
+
+	divOne.ReplaceWith(divTwo)
+
+	a.True(isNull(divOneId))
+	a.True(!isNull(divTwoId))
+
+}
