@@ -2,53 +2,87 @@
 
 package godom
 
-var mockGlobal *value
+var globalThisVar Value
+
+type mockObject struct {
+	props      map[string]interface{}
+	attributes map[string]interface{}
+}
+
+func (mo *mockObject) init() {
+	if mo.props == nil {
+		mo.props = map[string]interface{}{}
+	}
+	if mo.attributes == nil {
+		mo.attributes = map[string]interface{}{}
+	}
+}
+
+func (mo *mockObject) Set(prop string, value any) {
+	mo.init()
+	mo.props[prop] = value
+}
+
+func (mo *mockObject) Get(prop string) Value {
+	mo.init()
+	return toValue(mo.props[prop])
+}
+
+func (mo *mockObject) SetAttribute(prop string, value any) {
+	mo.init()
+	mo.attributes[prop] = value
+}
+
+//func (mo *mockObject) GetAttribute(prop string) Value {
+//	mo.init()
+//	return toValue(mo.attributes[prop])
+//}
+
+type globalThis struct {
+	mockObject
+}
+
+type mockWindow struct {
+	mockObject
+}
+
+type mockDocument struct {
+	mockObject
+}
+
+func (md *mockDocument) CreateElement(tag string) Value {
+	me := &mockElement{}
+	me.Set("nodeName", tag)
+	return toValue(me)
+}
+
+func (md *mockDocument) CreateTextNode(text string) Value {
+	me := &mockElement{}
+	me.Set("data", text)
+	return toValue(me)
+}
+
+type mockElement struct {
+	mockObject
+	children []Value
+}
+
+func (m *mockElement) AppendChild(child Value) {
+	m.children = append(m.children, child)
+}
 
 func global() Value {
-	if mockGlobal == nil {
-		mockGlobal = valueT(TypeObject,
-			dataMap{"window": mockWindow()},
-		)
+	// TODO: locking
+	if globalThisVar == nil {
+		globalThisVar = toValue(&globalThis{})
+		window := toValue(&mockWindow{})
+		mockDoc := &mockDocument{}
+		me := &mockElement{}
+		me.Set("nodeName", "html")
+		//me.Set("hasAttributes", false)
+		mockDoc.Set("documentElement", toValue(me))
+		window.Set("document", toValue(mockDoc))
+		globalThisVar.Set("window", window)
 	}
-	return mockGlobal
-}
-
-func mockWindow() Value {
-	return valueT(TypeObject,
-		dataMap{"document": mockDocument()},
-	)
-}
-
-func mockDocument() *value {
-	doc := valueT(TypeObject)
-	doc.data = dataMap{
-		"createElement": func(nodeName string) Value {
-			return elementValue(doc, "", nodeName)
-		},
-		"createElementNS": func(ns, nodeName string) Value {
-			return elementValue(doc, ns, nodeName)
-		},
-		"createTextNode": func(text string) Value {
-			return valueT(TypeObject).set("document", doc).set("data", text)
-		},
-	}
-	return doc
-}
-
-func elementValue(doc Value, ns, nodeName string) *value {
-	e := valueT(TypeObject)
-	e.data = dataMap{
-		"namespaceURI":  ns,
-		"nodeName":      nodeName,
-		"document":      doc,
-		"remove":        func() { panic(IM) },
-		"replaceWith":   func(v Value) { panic(IM) },
-		"hasAttributes": func() Value { return ToValue(false) },
-		"hasChildNodes": func() Value { return ToValue(false) },
-		"attributes":    func() Value { return ToValue([]interface{}{}) },
-		"childNodes":    func() Value { return ToValue([]interface{}{}) },
-		"appendChild":   func(v Value) {},
-		"setAttribute":  func(name string, value interface{}) {},
-	}
-	return e
+	return globalThisVar
 }

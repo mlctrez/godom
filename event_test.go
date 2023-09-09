@@ -11,6 +11,6 @@ func TestEventFunc(t *testing.T) {
 	a := assert.New(t)
 	gotEvent := false
 	eventFunc := EventFunc(func() { gotEvent = true })
-	eventFunc(ToValue("test"))
+	eventFunc(toValue("test"))
 	a.True(gotEvent)
 }

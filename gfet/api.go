@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"github.com/mlctrez/godom"
+	"github.com/mlctrez/godom/std"
 	"net/textproto"
 )
 
@@ -43,27 +44,22 @@ type Response struct {
 }
 
 func (f *fetch) fulfilled(arg godom.Value) {
-	f.res = &Response{Headers: textproto.MIMEHeader{}}
+	r := &Response{Headers: textproto.MIMEHeader{}}
 
 	headersIt := arg.Get("headers").Call("entries")
-	for {
-		n := headersIt.Call("next")
-		if n.Get("done").Bool() {
-			break
-		}
-		pair := n.Get("value")
-		key, value := pair.Index(0).String(), pair.Index(1).String()
-		f.res.Headers.Add(key, value)
-	}
+	std.MapEach(headersIt, func(key, val godom.Value) {
+		r.Headers.Add(key.String(), val.String())
+	})
 
-	f.res.Ok = arg.Get("ok").Bool()
-	f.res.Redirected = arg.Get("redirected").Bool()
-	f.res.Status = arg.Get("status").Int()
-	f.res.StatusText = arg.Get("statusText").String()
-	f.res.Type = arg.Get("type").String()
-	f.res.URL = arg.Get("url").String()
-	f.res.BodyUsed = arg.Get("bodyUsed").Bool()
+	r.Ok = arg.Get("ok").Bool()
+	r.Redirected = arg.Get("redirected").Bool()
+	r.Status = arg.Get("status").Int()
+	r.StatusText = arg.Get("statusText").String()
+	r.Type = arg.Get("type").String()
+	r.URL = arg.Get("url").String()
+	r.BodyUsed = arg.Get("bodyUsed").Bool()
 
+	f.res = r
 	arg.Call("arrayBuffer").Call("then", f.funcOf(f.arrayBuffer))
 }
 
@@ -111,7 +107,7 @@ func Fetch(r *Request) (res *Response, err error) {
 	// TODO: other request options
 
 	fetchApi := global.Get("fetch")
-	fetchApi.Invoke(r.URL, optionsMap).
+	go fetchApi.Invoke(r.URL, optionsMap).
 		Call("then", f.funcOf(f.fulfilled)).
 		Call("catch", f.funcOf(f.rejected))
 

@@ -4,186 +4,127 @@ package godom
 
 import (
 	"fmt"
-	"reflect"
-
 	"github.com/mlctrez/godom/convert"
+	"reflect"
+	"unicode"
 )
 
 var _ Value = (*value)(nil)
 
-type dataMap map[string]interface{}
-
 type value struct {
-	t Type
-	// data contains the backing value
-	data dataMap
-	gov  interface{}
+	t   Type
+	v   any
+	gov any
 }
 
-func (v *value) GoValue() interface{}      { return v.gov }
-func (v *value) SetGoValue(gv interface{}) { v.gov = gv }
+func (m *value) GoValue() interface{}      { return m.gov }
+func (m *value) SetGoValue(gv interface{}) { m.gov = gv }
 
-func valueT(t Type, data ...dataMap) *value {
-	v := &value{t: t, data: dataMap{}}
-	v.gov = v
-	for _, dm := range data {
-		for key, value := range dm {
-			v.data[key] = value
-		}
+func reflectTypeOf(in any) (out any) {
+	if in != nil {
+		out = reflect.TypeOf(in)
 	}
-	return v
+	return out
 }
 
-func (v *value) set(key string, val interface{}) *value {
-	if v.data == nil {
-		v.data = map[string]interface{}{key: val}
+func (m *value) Type() Type { return m.t }
+
+func capitalize(str string) string {
+	runes := []rune(str)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+func (m *value) Call(method string, args ...interface{}) Value {
+	method = capitalize(method)
+	if m.t != TypeObject {
+		panic(fmt.Sprintf("call type=%q value=%+v not object type", m.t, m.v))
+	}
+	if m.v == nil {
+		panic(fmt.Sprintf("call type=%q value=%+v nil object value", m.t, m.v))
+	}
+	reflectMethod := reflect.ValueOf(m.v).MethodByName(method)
+	if !reflectMethod.IsValid() || reflectMethod.IsNil() || reflectMethod.IsZero() {
+		panic(fmt.Sprintf("call type=%q value=%v method=%q method does not exist", m.t, reflectTypeOf(m.v), method))
+	}
+	var reflectValues []reflect.Value
+	if args == nil {
+		reflectValues = reflectMethod.Call(nil)
 	} else {
-		v.data[key] = val
+		reflectValues = reflectMethod.Call(convert.ToReflectArgs(args...))
 	}
-	return v
+	returnValues := convert.FromReflectArgs(reflectValues)
+	switch len(returnValues) {
+	case 0:
+		return &value{t: TypeUndefined, v: nil}
+	case 1:
+		return toValue(returnValues[0])
+	default:
+		panic(fmt.Sprintf("call type=%q value=%v method=%q multiple return values", m.t, reflectTypeOf(m.v), method))
+	}
 }
 
-func ToValue(i interface{}) Value {
-
-	switch v := i.(type) {
-	case Value:
-		return v
+func toValue(in any) Value {
+	switch vt := in.(type) {
+	case *value:
+		return vt
 	case nil:
-		return valueT(TypeNull)
-	case bool:
-		return valueT(TypeBoolean).set("bool", v)
-	case int, int8, int16, int32, int64, float32, float64:
-		return valueT(TypeNumber).set("number", v)
+		return &value{t: TypeNull, v: nil}
 	case string:
-		return valueT(TypeString).set("string", v)
-	case map[string]interface{}:
-		return &value{t: TypeObject, data: v}
-	case []Value:
-		return valueT(TypeObject).set("array", v)
-	case []interface{}:
-		return valueT(TypeObject).set("array", v)
-	case []reflect.Value:
-		args := convert.FromReflectArgs(v)
-		if len(args) == 1 {
-			return ToValue(args[0])
-		}
-		return valueT(TypeObject).set("array", args)
-	}
-
-	if reflect.ValueOf(i).Kind() == reflect.Func {
-		return valueT(TypeFunction).set("func", i)
-	}
-	if reflect.ValueOf(i).Kind() == reflect.Struct {
-		return valueT(TypeObject).set("object", i)
-	}
-	panic(fmt.Errorf("ToValue conversion failed for kind %s %s", reflect.TypeOf(i).Kind(), i))
-}
-
-func (v *value) JSValue() Value              { return v }
-func (v *value) Equal(w Value) bool          { return ptr(w) == ptr(v) }
-func (v *value) IsUndefined() bool           { panic(IM) }
-func (v *value) IsNull() bool                { return v.t == TypeNull }
-func (v *value) IsNaN() bool                 { panic(IM) }
-func (v *value) Type() Type                  { return v.t }
-func (v *value) Get(p string) Value          { return ToValue(v.data[p]) }
-func (v *value) Set(p string, x interface{}) { v.set(p, x) }
-func (v *value) Delete(p string)             { panic(IM) }
-
-func (v *value) Index(i int) Value {
-	if i < 0 || i+1 > v.Length() {
-		panic("index out of bounds")
-	}
-	return ToValue(v.data["array"].([]interface{})[i])
-}
-
-func (v *value) SetIndex(i int, x interface{}) {
-	if i < 0 || i+1 > v.Length() {
-		panic("index out of bounds")
-	}
-	v.data["array"].([]interface{})[i] = x
-}
-
-func (v *value) Length() int {
-	if v.Type() != TypeObject {
-		panic("value is not an object")
-	}
-	if ary, ok := v.data["array"].([]interface{}); ok {
-		return len(ary)
-	}
-	panic("value is not an array")
-}
-
-func (v *value) Call(m string, args ...interface{}) Value {
-	if v.Type() != TypeObject {
-		panic("value is not object")
-	}
-	if f, ok := v.data[m]; ok {
-		of := reflect.ValueOf(f)
-		reflectArgs := convert.ToReflectArgs(args...)
-		call := of.Call(reflectArgs)
-		return ToValue(call)
-	} else {
-		panic(fmt.Errorf("no such method %q", m))
+		return &value{t: TypeString, v: vt}
+	case int, int8, int32, int64, float32, float64:
+		return &value{t: TypeNumber, v: convert.ToFloat(vt)}
+	case bool:
+		return &value{t: TypeBoolean, v: vt}
+	case Func:
+		return &value{t: TypeFunction, v: vt}
+	default:
+		return &value{t: TypeObject, v: vt}
 	}
 }
 
-func (v *value) Invoke(args ...interface{}) Value { panic(IM) }
-func (v *value) New(args ...interface{}) Value    { panic(IM) }
-
-func (v *value) Float() float64 {
-	switch v.t {
-	case TypeNumber:
-		return convert.ToFloat(v.data["number"])
+func (m *value) Invoke(args ...interface{}) Value {
+	if m.t != TypeFunction {
+		panic("invoke on non-function type")
 	}
-	panic(fmt.Errorf("value %s converstion to Float() failed", v.t))
+	panic(IM)
 }
+func (m *value) New(args ...interface{}) Value { panic(IM) }
 
-func (v *value) Int() int {
-	switch v.t {
-	case TypeNumber:
-		return convert.ToInt(v.data["number"])
-	}
-	panic(fmt.Errorf("value %s converstion to Int() failed", v.t))
-}
+func (m *value) Equal(other Value) bool { return ptr(other) == ptr(m) }
+func (m *value) JSValue() Value         { return m }
 
-func (v *value) Bool() bool {
-	return v.data["bool"].(bool)
-}
+func (m *value) IsUndefined() bool { return m.t == TypeUndefined }
+func (m *value) IsNull() bool      { return m.t == TypeNull }
+func (m *value) IsNaN() bool       { panic(IM) }
 
-func (v *value) Truthy() bool {
-	switch v.t {
+func (m *value) Get(p string) Value            { return m.Call("Get", p) }
+func (m *value) Set(p string, x interface{})   { m.Call("Set", p, x) }
+func (m *value) Delete(p string)               { m.Call("Delete", p) }
+func (m *value) Index(i int) Value             { return m.Call("Index", i) }
+func (m *value) SetIndex(i int, x interface{}) { m.Call("SetIndex", i, x) }
+func (m *value) Length() int                   { return m.Call("Length").Int() }
+func (m *value) Float() float64                { return convert.ToFloat(m.v) }
+func (m *value) Int() int                      { return convert.ToInt(m.v) }
+func (m *value) Truthy() bool {
+	switch m.t {
 	case TypeUndefined, TypeNull:
 		return false
 	case TypeBoolean:
-		return v.Bool()
+		return m.Bool()
 	case TypeNumber:
-		return v.Int() > 0
+		return m.Int() > 0
 	default:
 		return true
 	}
 }
-
-func (v *value) String() string {
-	switch v.t {
-	case TypeUndefined, TypeNull:
-		return v.t.String()
-	case TypeString:
-		return v.data["string"].(string)
-	case TypeObject:
-		return fmt.Sprintf("%+v", v.data)
+func (m *value) Bool() bool {
+	if m.t == TypeBoolean {
+		return m.v.(bool)
 	}
-	panic(fmt.Errorf("type %d String() not implemented", v.t))
+	panic(fmt.Sprintf("call type=%q value=%v not type boolean", m.t, reflectTypeOf(m.v)))
 }
 
-func (v *value) InstanceOf(t Value) bool { panic(IM) }
-
-func (v *value) Bytes() []byte { panic(IM) }
-
-// Invoke is a sample demonstrating go reflection.
-func Invoke(any interface{}, name string, args ...interface{}) {
-	inputs := make([]reflect.Value, len(args))
-	for i, _ := range args {
-		inputs[i] = reflect.ValueOf(args[i])
-	}
-	reflect.ValueOf(any).MethodByName(name).Call(inputs)
-}
+func (m *value) String() string          { return fmt.Sprintf("%v", m.v) }
+func (m *value) Bytes() []byte           { panic(IM) }
+func (m *value) InstanceOf(t Value) bool { panic(IM) }
