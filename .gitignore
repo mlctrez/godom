@@ -6,3 +6,4 @@ build/
 *.sh
 *.md
 *.html
+*.js

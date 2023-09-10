@@ -3,6 +3,7 @@
 package godom
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -22,40 +23,27 @@ func TestValue_Basic(t *testing.T) {
 	s := &value{t: TypeObject, v: &mockBasic{}}
 	a.Equal(TypeObject, s.Type())
 	a.True(s.JSValue().Equal(s))
-	func() {
-		defer func() { a.Contains(recover(), "method does not exist") }()
-		s.Call("MethodNameDoesNotExist")
-	}()
-	func() {
-		defer func() { a.Contains(recover(), "multiple return values") }()
-		s.Call("MultipleReturn")
-	}()
+
+	a.Contains(recoverString(func() { s.Call("NotExist") }), "method does not exist")
+	a.Contains(recoverString(func() { s.Call("MultipleReturn") }), "multiple return values")
+
 	a.Equal("String()", s.Call("String").String())
 	a.Equal("lowercaseMethod()", s.Call("lowercaseMethod").String())
 	a.True(s.Call("CheckUndefined").IsUndefined())
 	a.True(s.Call("CheckNull").IsNull())
-	func() {
-		defer func() { a.Contains(recover(), "not object type") }()
-		(&value{t: TypeNull}).Call("notUsed")
-	}()
-	func() {
-		defer func() { a.Contains(recover(), "nil object value") }()
-		(&value{t: TypeObject}).Call("notUsed")
-	}()
+
+	v := &value{t: TypeNull}
+	a.Contains(recoverString(func() { v.Call("method") }), "not object type")
+	v = &value{t: TypeObject}
+	a.Contains(recoverString(func() { v.Call("method") }), "nil object value")
+	v = &value{t: TypeObject, v: ""}
+	a.Contains(recoverString(func() { v.Call("") }), "method cannot be empty")
 
 }
-
-type mapObject struct {
-	m map[string]interface{}
-}
-
-func (mo *mapObject) Get(p string) any    { return toValue(mo.m[p]) }
-func (mo *mapObject) Set(p string, x any) { mo.m[p] = x }
-func (mo *mapObject) Delete(p string)     { delete(mo.m, p) }
 
 func TestValue_GetSetDelete(t *testing.T) {
 	a := assert.New(t)
-	mo := &mapObject{m: map[string]interface{}{}}
+	mo := &ValueObject{m: map[string]interface{}{}}
 	s := &value{t: TypeObject, v: mo}
 	s.Set("key", "value")
 	a.Equal("value", mo.m["key"])
@@ -107,22 +95,8 @@ func TestValue_Bool(t *testing.T) {
 	}()
 }
 
-/*
-	func (m *value) Truthy() bool {
-		switch m.t {
-		case TypeUndefined, TypeNull:
-			return false
-		case TypeBoolean:
-			return m.Bool()
-		case TypeNumber:
-			return m.Int() > 0
-		default:
-			return true
-		}
-	}
-*/
 func TestValue_Truthy(t *testing.T) {
-
+	// TODO: validate against js, this is a best guess for now
 	a := assert.New(t)
 	a.False((&value{t: TypeUndefined}).Truthy())
 	a.False((&value{t: TypeNull}).Truthy())
@@ -130,5 +104,80 @@ func TestValue_Truthy(t *testing.T) {
 	a.True((&value{t: TypeBoolean, v: true}).Truthy())
 	a.True((&value{t: TypeNumber, v: 1}).Truthy())
 	a.True((&value{t: TypeObject, v: "dummy"}).Truthy())
+}
 
+func TestValue_funcChecks(t *testing.T) {
+	a := assert.New(t)
+	s := &value{t: TypeObject}
+	a.Contains(recoverString(func() { s.Invoke() }), "invoke on non-function type")
+
+	s = &value{t: TypeFunction}
+	a.Contains(recoverString(func() { s.Invoke() }), "incorrect value")
+}
+
+func recoverString(toTest func()) (result string) {
+	defer func() { result = fmt.Sprintf("%v", recover()) }()
+	toTest()
+	return ""
+}
+
+func TestValue_GoValue(t *testing.T) {
+	a := assert.New(t)
+	g := Global()
+	g.SetGoValue(g)
+	a.IsType(&value{}, g.GoValue())
+
+}
+
+type newWithArgs struct {
+	ValueObject
+	args []any
+}
+
+func (n *newWithArgs) New(args ...any) any {
+	return &newWithArgs{args: args}
+}
+
+func (n *newWithArgs) Args() any {
+	return toValue(n.args)
+}
+
+func TestValue_New(t *testing.T) {
+	testValueNew(t)
+	// additional testing for new with multiple args
+	g := Global()
+	g.Set("NewWithArgs", &value{t: TypeFunction, v: &newWithArgs{}})
+	v := g.Get("NewWithArgs").New("a", "b")
+	a := assert.New(t)
+	a.IsType(&newWithArgs{}, v.(*value).v)
+	call := v.Call("Args")
+	// TODO: revisit this after creating ValueArray
+	a.EqualValues([]any{"a", "b"}, call.(*value).v)
+}
+
+func TestValue_New_error(t *testing.T) {
+	a := assert.New(t)
+	a.Contains(recoverString(func() { (&value{t: TypeObject}).New() }), "new called on wrong type")
+}
+
+func Test_capitalize(t *testing.T) {
+	// should not panic on runes[0]
+	capitalize("")
+	a := assert.New(t)
+	a.Equal("Test", capitalize("test"))
+}
+
+func TestValue_IsNaN(t *testing.T) {
+	testValueIsNaN(t)
+}
+
+func TestValue_InstanceOf(t *testing.T) {
+	testValueInstanceOf(t)
+}
+
+func TestValue_Bytes(t *testing.T) {
+	a := assert.New(t)
+	a.Contains(recoverString(func() {
+		(&value{}).Bytes()
+	}), "not implemented")
 }

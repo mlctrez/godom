@@ -20,6 +20,7 @@ type value struct {
 func (m *value) GoValue() interface{}      { return m.gov }
 func (m *value) SetGoValue(gv interface{}) { m.gov = gv }
 
+// reflectTypeOf returns reflect.TypeOf(in) or nil for nil in.
 func reflectTypeOf(in any) (out any) {
 	if in != nil {
 		out = reflect.TypeOf(in)
@@ -27,32 +28,43 @@ func reflectTypeOf(in any) (out any) {
 	return out
 }
 
-func (m *value) Type() Type { return m.t }
+func (m *value) Type() Type {
+	return m.t
+}
 
 func capitalize(str string) string {
+	if str == "" {
+		return str
+	}
 	runes := []rune(str)
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
 }
 
 func (m *value) Call(method string, args ...interface{}) Value {
-	method = capitalize(method)
-	if m.t != TypeObject {
-		panic(fmt.Sprintf("call type=%q value=%+v not object type", m.t, m.v))
+	validFuncTarget(m)
+	if method == "" {
+		panic(fmt.Sprintf("call type=%q value=%v method=%q method cannot be empty", m.t, reflectTypeOf(m.v), method))
 	}
-	if m.v == nil {
-		panic(fmt.Sprintf("call type=%q value=%+v nil object value", m.t, m.v))
+	upMethod := capitalize(method)
+
+	reflectMethod := reflect.ValueOf(m.v).MethodByName(upMethod)
+	if !reflectMethod.IsValid() {
+		if gt, ok := m.v.(*globalThis); ok {
+			if val, ok := gt.Call(method, args); ok {
+				return val
+			}
+		}
+		panic(fmt.Sprintf("call type=%q value=%v method=%q method does not exist", m.t, reflectTypeOf(m.v), upMethod))
 	}
-	reflectMethod := reflect.ValueOf(m.v).MethodByName(method)
-	if !reflectMethod.IsValid() || reflectMethod.IsNil() || reflectMethod.IsZero() {
-		panic(fmt.Sprintf("call type=%q value=%v method=%q method does not exist", m.t, reflectTypeOf(m.v), method))
-	}
+
 	var reflectValues []reflect.Value
 	if args == nil {
 		reflectValues = reflectMethod.Call(nil)
 	} else {
 		reflectValues = reflectMethod.Call(convert.ToReflectArgs(args...))
 	}
+
 	returnValues := convert.FromReflectArgs(reflectValues)
 	switch len(returnValues) {
 	case 0:
@@ -60,8 +72,27 @@ func (m *value) Call(method string, args ...interface{}) Value {
 	case 1:
 		return toValue(returnValues[0])
 	default:
-		panic(fmt.Sprintf("call type=%q value=%v method=%q multiple return values", m.t, reflectTypeOf(m.v), method))
+		panic(fmt.Sprintf("call type=%q value=%v method=%q multiple return values", m.t, reflectTypeOf(m.v), upMethod))
 	}
+}
+
+func validFuncTarget(m *value) {
+	switch m.t {
+	case TypeFunction, TypeObject:
+	default:
+		panic(fmt.Sprintf("call type=%q value=%+v not object type", m.t, m.v))
+	}
+	if m.v == nil {
+		panic(fmt.Sprintf("call type=%q value=%+v nil object value", m.t, m.v))
+	}
+}
+
+func toValues(values []any) []Value {
+	result := make([]Value, len(values))
+	for i, a := range values {
+		result[i] = toValue(a)
+	}
+	return result
 }
 
 func toValue(in any) Value {
@@ -87,16 +118,34 @@ func (m *value) Invoke(args ...interface{}) Value {
 	if m.t != TypeFunction {
 		panic("invoke on non-function type")
 	}
-	panic(IM)
+	if nwf, ok := m.v.(*noWasmFunc); ok {
+		return toValue(nwf.fn(nwf, toValues(args)))
+	}
+	panic(fmt.Sprintf("invoke type=%q value=%+v incorrect value", m.t, m.v))
 }
-func (m *value) New(args ...interface{}) Value { panic(IM) }
+
+func (m *value) New(args ...interface{}) Value {
+	if m.t != TypeFunction {
+		panic(fmt.Sprintf("new called on wrong type %q", m.t))
+	}
+	if args == nil {
+		return m.Call("New")
+	} else {
+		return m.Call("New", args...)
+	}
+}
 
 func (m *value) Equal(other Value) bool { return ptr(other) == ptr(m) }
 func (m *value) JSValue() Value         { return m }
 
 func (m *value) IsUndefined() bool { return m.t == TypeUndefined }
 func (m *value) IsNull() bool      { return m.t == TypeNull }
-func (m *value) IsNaN() bool       { panic(IM) }
+
+type ValueNaN struct{}
+
+func (m *value) IsNaN() bool {
+	return reflectTypeOf(m.v) == reflectTypeOf(ValueNaN{})
+}
 
 func (m *value) Get(p string) Value            { return m.Call("Get", p) }
 func (m *value) Set(p string, x interface{})   { m.Call("Set", p, x) }
@@ -125,6 +174,8 @@ func (m *value) Bool() bool {
 	panic(fmt.Sprintf("call type=%q value=%v not type boolean", m.t, reflectTypeOf(m.v)))
 }
 
-func (m *value) String() string          { return fmt.Sprintf("%v", m.v) }
-func (m *value) Bytes() []byte           { panic(IM) }
-func (m *value) InstanceOf(t Value) bool { panic(IM) }
+func (m *value) String() string { return fmt.Sprintf("%v", m.v) }
+func (m *value) Bytes() []byte  { panic(IM) }
+func (m *value) InstanceOf(t Value) bool {
+	return t.Call("IsInstance", m).Bool()
+}

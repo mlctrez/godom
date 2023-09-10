@@ -1,9 +1,11 @@
 package godom
 
+type FuncSignature func(this Value, args []Value) any
+
 type Func interface {
 	Release()
 }
 
-func FuncOf(fn func(this Value, args []Value) any) Func {
+func FuncOf(fn FuncSignature) Func {
 	return funcOf(fn)
 }

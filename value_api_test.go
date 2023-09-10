@@ -1,6 +1,7 @@
 package godom
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -35,4 +36,36 @@ func TestUtil_ptr(t *testing.T) {
 		t.Error("failed inequality test")
 	}
 
+}
+
+/*
+	Everything below is called from both wasm and !wasm test cases
+	to ensure that assertions are consistent across architectures.
+*/
+
+func testValueNew(t *testing.T) {
+	a := assert.New(t)
+	obj := Global().Get("Object")
+	a.Equal(TypeFunction, obj.Type())
+	a.Equal(TypeObject, obj.New().Type())
+}
+
+func testValueIsNaN(t *testing.T) {
+	a := assert.New(t)
+	obj := Global().Get("NaN")
+	a.Equal(TypeNumber, obj.Type())
+	a.True(obj.IsNaN())
+}
+
+func testValueInstanceOf(t *testing.T) {
+	a := assert.New(t)
+	g := Global()
+
+	p := "theVarUnderTest"
+	so := g.Get("Object").New()
+	g.Set(p, so)
+
+	fromGlobal := g.Get(p)
+	stringType := g.Get("Object")
+	a.True(fromGlobal.InstanceOf(stringType), "js.Value.InstanceOf test failed")
 }

@@ -33,13 +33,22 @@ func (mo *mockObject) SetAttribute(prop string, value any) {
 	mo.attributes[prop] = value
 }
 
-//func (mo *mockObject) GetAttribute(prop string) Value {
-//	mo.init()
-//	return toValue(mo.attributes[prop])
-//}
+func (mo *mockObject) GetAttribute(prop string) Value {
+	mo.init()
+	return toValue(mo.attributes[prop])
+}
 
 type globalThis struct {
 	mockObject
+}
+
+func (t *globalThis) Call(method string, args []interface{}) (Value, bool) {
+	if v, ok := t.props[method]; ok {
+		if nwf, okF := v.(*noWasmFunc); okF {
+			return toValue(nwf.fn(nwf.Value, toValues(args))), true
+		}
+	}
+	return nil, false
 }
 
 type mockWindow struct {
@@ -83,6 +92,8 @@ func global() Value {
 		mockDoc.Set("documentElement", toValue(me))
 		window.Set("document", toValue(mockDoc))
 		globalThisVar.Set("window", window)
+		globalThisVar.Set("Object", &value{t: TypeFunction, v: &ValueObject{}})
+		globalThisVar.Set("NaN", &value{t: TypeNumber, v: ValueNaN{}})
 	}
 	return globalThisVar
 }

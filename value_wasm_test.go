@@ -120,3 +120,15 @@ func TestWasmValue_Int(t *testing.T) {
 	g.Set("testIntValue", intValue)
 	a.Equal(intValue, g.Get("testIntValue").Int())
 }
+
+func TestValue_New(t *testing.T) {
+	testValueNew(t)
+}
+
+func TestValue_IsNaN(t *testing.T) {
+	testValueIsNaN(t)
+}
+
+func TestValue_InstanceOf(t *testing.T) {
+	testValueInstanceOf(t)
+}

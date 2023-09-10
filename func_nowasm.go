@@ -5,12 +5,15 @@ package godom
 var _ Func = (*noWasmFunc)(nil)
 
 type noWasmFunc struct {
+	Value
+	fn FuncSignature
 }
 
 func (nw *noWasmFunc) Release() {
-
 }
 
-func funcOf(func(this Value, args []Value) any) Func {
-	return &noWasmFunc{}
+func funcOf(fn FuncSignature) Func {
+	nwf := &noWasmFunc{fn: fn}
+	nwf.Value = toValue(nwf)
+	return nwf
 }

@@ -78,9 +78,9 @@ type Value interface {
 	SetGoValue(gv interface{})
 }
 
-type ThisValue interface {
-	Value() Value
-}
+//type ThisValue interface {
+//	Value() Value
+//}
 
 type Type int
 
