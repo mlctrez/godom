@@ -27,7 +27,7 @@ func (a *App) Run() {
 
 	var body dom.Node
 	body = doc.El("body")
-	p := doc.El("p")
+	p := doc.El("p", doc.At("style", "cursor:pointer"))
 	p.AppendChild(document.CreateTextNode("click here to close websocket"))
 	p.AddEventListener("click", func(event dom.Value) {
 		a.ws.Close()
