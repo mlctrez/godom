@@ -177,7 +177,5 @@ func TestValue_InstanceOf(t *testing.T) {
 
 func TestValue_Bytes(t *testing.T) {
 	a := assert.New(t)
-	a.Contains(recoverString(func() {
-		(&value{}).Bytes()
-	}), "not implemented")
+	a.Contains(recoverString(func() { (&value{}).Bytes() }), IM)
 }
