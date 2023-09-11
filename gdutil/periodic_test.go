@@ -2,7 +2,6 @@ package gdutil
 
 import (
 	"context"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -31,5 +30,4 @@ func TestPeriodic(t *testing.T) {
 	shouldContinue = false
 	time.Sleep(2 * time.Millisecond)
 	a.True(invokeCount > 0)
-	fmt.Println(invokeCount)
 }

@@ -18,7 +18,7 @@ jobs:
         uses: browser-actions/setup-chrome@latest
       - name: Install wasmbrowsertest
         run: |
-          git clone -b fs-api-forwarding https://github.com/mlctrez/wasmbrowsertest /tmp/wasmbrowsertest
+          git clone -b add-httpbin-endpoints https://github.com/mlctrez/wasmbrowsertest /tmp/wasmbrowsertest
           go mod -C /tmp/wasmbrowsertest download
           go build -C /tmp/wasmbrowsertest -o $(go env GOPATH)/bin/go_js_wasm_exec
       - name: Run Unit tests

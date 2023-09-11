@@ -17,6 +17,10 @@ type value struct {
 	gov any
 }
 
+func ToJsValue(arg interface{}) interface{} {
+	panic(IM)
+}
+
 func (m *value) GoValue() interface{}      { return m.gov }
 func (m *value) SetGoValue(gv interface{}) { m.gov = gv }
 

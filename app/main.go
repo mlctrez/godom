@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	dom "github.com/mlctrez/godom"
+	"github.com/mlctrez/godom/gdutil"
 	"github.com/mlctrez/godom/gfet"
 	"github.com/mlctrez/godom/gws"
 	"time"
@@ -20,7 +21,7 @@ type App struct {
 func (a *App) Run() {
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
 
-	go a.monitorServer()
+	go a.KeepAlive()
 
 	document := dom.Document()
 	doc := dom.Document().DocApi()
@@ -55,7 +56,9 @@ func (a *App) tryReconnect() {
 	endAt := time.Now().Add(time.Second * 5)
 	for {
 		href := dom.Global().Get("location").Get("href").String()
-		if _, err := gfet.Fetch(&gfet.Request{URL: href}); err == nil || time.Now().After(endAt) {
+		req := &gfet.Request{URL: href, Method: "OPTIONS"}
+		_, err := req.Fetch()
+		if err == nil || time.Now().After(endAt) {
 			break
 		}
 		time.Sleep(time.Millisecond * time.Duration(500))
@@ -63,36 +66,28 @@ func (a *App) tryReconnect() {
 	dom.Global().Get("location").Call("reload")
 }
 
-func (a *App) onBinary(message []byte) {
-	if string(message) == "wasm" {
-		a.ctxCancel()
-	}
-}
+func (a *App) KeepAlive() {
 
-func (a *App) monitorServer() {
-
-	a.ws = gws.New(gws.Rel("ws"))
-	a.ws.OnBinaryMessage(a.onBinary)
-	a.ws.OnError(dom.EventFunc(a.ctxCancel))
-	a.ws.OnClose(gws.CloseFunc(a.ctxCancel))
-
-	pingTicker := time.NewTicker(time.Second)
-	defer pingTicker.Stop()
-	go func() {
-		for {
-			select {
-			case <-a.ctx.Done():
-				return
-			case <-pingTicker.C:
-				if err := a.ws.SendBinary([]byte("keepalive")); err != nil {
-					a.ctxCancel()
-					return
-				}
-			}
+	onBinary := func(message []byte) {
+		if string(message) == "wasm" {
+			a.ctxCancel()
 		}
-	}()
+	}
 
-	<-a.ctx.Done()
+	ws := gws.New(gws.Rel("ws"))
+	a.ws = ws
+	ws.OnBinaryMessage(onBinary)
+	ws.OnError(dom.EventFunc(a.ctxCancel))
+	ws.OnClose(gws.CloseFunc(a.ctxCancel))
+
+	go gdutil.Periodic(a.ctx, time.Second, func() (ok bool) {
+		if err := ws.SendBinary([]byte("keepalive")); err == nil {
+			ok = true
+		} else {
+			a.ctxCancel()
+		}
+		return ok
+	})
 }
 
 func main() {
