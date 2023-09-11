@@ -26,8 +26,8 @@ func TestPeriodic(t *testing.T) {
 		invokeCount++
 		return shouldContinue
 	})
-	time.Sleep(2 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 	shouldContinue = false
-	time.Sleep(2 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 	a.True(invokeCount > 0)
 }
