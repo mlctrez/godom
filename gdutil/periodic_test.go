@@ -1,11 +1,9 @@
-//go:build !wasm
-
 package gdutil
 
 import (
 	"context"
-	"fmt"
 	"github.com/stretchr/testify/assert"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -23,17 +21,20 @@ func TestPeriodic(t *testing.T) {
 
 	ctx, cancelFunc = context.WithCancel(context.Background())
 	defer cancelFunc()
-	shouldContinue := true
-	invokeCount := 0
+	var invokeCount int32
+	var shouldContinue = atomic.Bool{}
+	shouldContinue.Store(true)
 	go Periodic(ctx, time.Millisecond, func() (ok bool) {
-		fmt.Println("invokeCount", invokeCount)
-		invokeCount++
-		return shouldContinue
+		atomic.AddInt32(&invokeCount, 1)
+		return shouldContinue.Load()
 	})
-	for invokeCount < 2 {
+	for atomic.LoadInt32(&invokeCount) < 2 {
 		time.Sleep(10 * time.Millisecond)
 	}
-	shouldContinue = false
-	time.Sleep(10 * time.Millisecond)
-	a.True(invokeCount > 0)
+	lastCount := atomic.LoadInt32(&invokeCount)
+	shouldContinue.Store(false)
+	for atomic.LoadInt32(&invokeCount) == lastCount {
+		time.Sleep(10 * time.Millisecond)
+	}
+	a.True(atomic.LoadInt32(&invokeCount) > 0)
 }
