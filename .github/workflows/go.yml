@@ -23,7 +23,7 @@ jobs:
           go build -C /tmp/wasmbrowsertest -o $(go env GOPATH)/bin/go_js_wasm_exec
       - name: Run Unit tests
         run: |
-          go test -race -covermode atomic -coverprofile=covprofile_nowasm .
+          go test -race -covermode atomic -coverprofile=covprofile_nowasm ./...
       - name: Run Unit tests using wasmbrowsertest
         run: |
           GOOS=js GOARCH=wasm go test -cover -covermode atomic -test.coverprofile=covprofile_wasm ./...
