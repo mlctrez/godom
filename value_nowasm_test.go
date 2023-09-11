@@ -179,3 +179,8 @@ func TestValue_Bytes(t *testing.T) {
 	a := assert.New(t)
 	a.Contains(recoverString(func() { (&value{}).Bytes() }), IM)
 }
+
+func TestToJsValue(t *testing.T) {
+	a := assert.New(t)
+	a.Panics(func() { ToJsValue("") })
+}

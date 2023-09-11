@@ -18,6 +18,7 @@ type value struct {
 }
 
 func ToJsValue(arg interface{}) interface{} {
+	// TODO: revisit if having this on the non-wasm path would be useful
 	panic(IM)
 }
 
