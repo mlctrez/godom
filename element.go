@@ -12,6 +12,8 @@ type Element interface {
 	RemoveChild(child Value)
 	SetAttribute(name string, value interface{})
 	ReplaceWith(replacement Node)
+	SetParent(parent Element)
+	Parent() Element
 }
 
 var _ Element = (*element)(nil)
@@ -19,6 +21,7 @@ var _ Element = (*element)(nil)
 type element struct {
 	node
 	attributes Attributes
+	parent     Element
 }
 
 func (e *element) ReplaceWith(n Node) {
@@ -26,10 +29,6 @@ func (e *element) ReplaceWith(n Node) {
 }
 
 func (e *element) SetAttribute(name string, value interface{}) {
-	//if strings.HasPrefix(name, "on") {
-	//	e.this.Set(name, value)
-	//	return
-	//}
 	e.attributes = append(e.attributes, &Attribute{Name: name, Value: value})
 	e.this.Call("setAttribute", name, value)
 	e.attributes.SortByName()
@@ -44,6 +43,9 @@ func (e *element) RemoveChild(child Value) {
 }
 
 func (e *element) Remove() {
+	for _, f := range e.cleanup {
+		f()
+	}
 	e.this.Call("remove")
 }
 
@@ -66,7 +68,19 @@ func (e *element) String() string {
 	return e.Marshal(enc).Xml()
 }
 
+func (e *element) SetParent(parent Element) {
+	e.parent = parent
+}
+
+func (e *element) Parent() Element {
+	return e.parent
+}
+
 func ElementFromValue(value Value) Element {
+	if elType, ok := value.GoValue().(Element); ok {
+		return elType
+	}
+
 	e := &element{}
 	e.this = value
 	nodeName := value.Get("nodeName").String()

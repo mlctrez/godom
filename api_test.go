@@ -87,3 +87,16 @@ func TestDoc_directive(t *testing.T) {
 	}
 
 }
+
+func TestDoc_El_datago(t *testing.T) {
+	a := assert.New(t)
+	api := Document().DocApi()
+	var dataGoRef []string
+	api.CallBack = func(e Element, dataGo []string) {
+		a.Equal("div", e.NodeName())
+		dataGoRef = dataGo
+	}
+	api.H(`<div data-go="data-go-value"/>`)
+	a.Equal(1, len(dataGoRef))
+	a.Equal("data-go-value", dataGoRef[0])
+}

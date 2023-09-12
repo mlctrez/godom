@@ -10,14 +10,23 @@ import (
 
 // Doc is a helper class for working with the Document interface.
 type Doc struct {
-	Doc Value
+	Doc      Value
+	CallBack func(e Element, dataGo []string)
 }
 
 // El creates a new element with optional attributes.
 func (d Doc) El(tag string, attributes ...*Attribute) Element {
 	c := ElementFromValue(d.Doc.Call("createElement", tag))
+	var dataGo []string
 	for _, a := range attributes {
-		c.SetAttribute(a.Name, a.Value)
+		if a.Name == "data-go" {
+			dataGo = append(dataGo, a.Value.(string))
+		} else {
+			c.SetAttribute(a.Name, a.Value)
+		}
+	}
+	if dataGo != nil {
+		d.CallBack(c, dataGo)
 	}
 	return c
 }
@@ -32,7 +41,7 @@ func (d Doc) T(text string) Text {
 	return TextFromValue(d.Doc.Call("createTextNode", text))
 }
 
-func (d Doc) H(html string) Node {
+func (d Doc) H(html string) Element {
 	bufferString := bytes.NewBufferString(html)
 	n, err := d.Decode(xml.NewDecoder(bufferString))
 	if err != nil {
@@ -43,8 +52,8 @@ func (d Doc) H(html string) Node {
 	return n
 }
 
-func (d Doc) Decode(decoder *xml.Decoder) (Node, error) {
-	var parents []Node
+func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
+	var parents []Element
 	charBuffer := &charDataBuffer{}
 
 	startNode := func(doc Doc, x xml.StartElement) Element {
@@ -66,7 +75,7 @@ func (d Doc) Decode(decoder *xml.Decoder) (Node, error) {
 		case xml.StartElement:
 			parents = append(parents, startNode(d, x))
 			if len(parents) > 1 {
-				parents[len(parents)-2].AppendChild(parents[len(parents)-1])
+				appendChild(parents[len(parents)-2], parents[len(parents)-1])
 			}
 		case xml.EndElement:
 			textData := strings.TrimSpace(charBuffer.pop())
@@ -84,6 +93,11 @@ func (d Doc) Decode(decoder *xml.Decoder) (Node, error) {
 		return nil, err
 	}
 	return parents[0], nil
+}
+
+func appendChild(parent, child Element) {
+	parent.AppendChild(child)
+	child.SetParent(parent)
 }
 
 type charDataBuffer struct {

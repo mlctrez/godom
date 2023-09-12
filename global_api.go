@@ -43,14 +43,13 @@ func (d *document) DocumentElement() Element {
 func (d *document) Body() (body Element) {
 	for _, child := range d.DocumentElement().ChildNodes() {
 		if child.NodeName() == "body" {
-			body = child.(*element)
+			return child.(*element)
 		}
 	}
-	return
+	panic("unable to locate body")
 }
 
 func Document() DocumentApi {
-	// TODO: appropriate caching
 	docElement := Global().Get("window").Get("document")
 	d := &document{node{this: docElement}}
 	d.node.children = d.DocumentElement().ChildNodes()

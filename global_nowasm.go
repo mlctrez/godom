@@ -71,6 +71,20 @@ func (md *mockDocument) CreateTextNode(text string) Value {
 	return toValue(me)
 }
 
+func (md *mockDocument) Reset() {
+	documentElement := Doc{Doc: toValue(md)}.H("<html><head/><body/></html>")
+	md.Set("documentElement", documentElement.This())
+}
+
+func (md *mockDocument) GetElementById(id string) Value {
+	for _, child := range Document().Body().ChildNodes() {
+		if child.This().Call("getAttribute", "id").String() == id {
+			return child.This()
+		}
+	}
+	return toValue(nil)
+}
+
 type mockElement struct {
 	mockObject
 	children []Value
@@ -85,11 +99,10 @@ func global() Value {
 	if globalThisVar == nil {
 		globalThisVar = toValue(&globalThis{})
 		window := toValue(&mockWindow{})
+
 		mockDoc := &mockDocument{}
-		me := &mockElement{}
-		me.Set("nodeName", "html")
-		//me.Set("hasAttributes", false)
-		mockDoc.Set("documentElement", toValue(me))
+		mockDoc.Reset()
+
 		window.Set("document", toValue(mockDoc))
 		globalThisVar.Set("window", window)
 		globalThisVar.Set("Object", &value{t: TypeFunction, v: &ValueObject{}})

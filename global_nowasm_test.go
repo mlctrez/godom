@@ -4,6 +4,7 @@ package godom
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -33,4 +34,22 @@ func TestMockObject_Call_notFound(t *testing.T) {
 	call, b := obj.Call("notThere", nil)
 	a.Nil(call)
 	a.False(b)
+}
+
+func TestGlobal_Body(t *testing.T) {
+	a := require.New(t)
+	a.NotPanics(func() { Document().Body() })
+	Document().DocumentElement().(*element).children = nil
+	a.Panics(func() { Document().Body() })
+	Document().This().Call("reset")
+}
+
+func TestGlobal_GetElementById(t *testing.T) {
+	a := require.New(t)
+	doc := Document()
+	h := doc.DocApi().H(`<div id="idOne" match="yes"/>`)
+	doc.Body().AppendChild(h)
+	a.True(doc.This().Call("getElementById", "foo").IsNull())
+	a.False(doc.This().Call("getElementById", "idOne").IsNull())
+
 }

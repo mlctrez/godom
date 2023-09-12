@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	_ "embed"
-	"fmt"
 	dom "github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/gdutil"
 	"github.com/mlctrez/godom/gfet"
 	"github.com/mlctrez/godom/gws"
+	"strings"
 	"time"
 )
 
@@ -17,34 +17,42 @@ type App struct {
 	ws        gws.WebSocket
 }
 
+//go:embed body.html
+var bodyString string
+
+type AppEvent struct {
+	el     dom.Element
+	event  string
+	dataGo string
+}
+
+func (e *AppEvent) handleEvent(event dom.Value) {
+	dom.Console().Log("%s %o %o", e.dataGo, event, e.el)
+}
+
 // Run is the main entry point
 func (a *App) Run() {
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
 
 	go a.KeepAlive()
+	c := dom.Console()
 
 	document := dom.Document()
 	doc := dom.Document().DocApi()
+	doc.CallBack = func(e dom.Element, dataGo []string) {
+		for _, val := range dataGo {
+			split := strings.Split(val, ".")
+			if len(split) != 2 {
+				c.Log("invalid data-go attribute %s on %o", val, e.This())
+				continue
+			}
+			ae := &AppEvent{el: e, event: split[1], dataGo: split[0]}
+			e.AddEventListener(split[1], ae.handleEvent)
+		}
+	}
 
-	var body dom.Node
-	body = doc.El("body")
-	p := doc.El("p", doc.At("style", "cursor:pointer"))
-	p.AppendChild(document.CreateTextNode("click here to close websocket"))
-	p.AddEventListener("click", func(event dom.Value) {
-		a.ws.Close()
-	})
-
-	removedDiv := doc.El("div")
-	removedDiv.AppendChild(p)
-	body.AppendChild(removedDiv)
-
-	buttonOne := doc.H(`<button>click to remove div</button>`)
-	buttonOne.AddEventListener("click", func(event dom.Value) {
-		fmt.Println("button one")
-		removedDiv.Remove()
-	})
-
-	body.AppendChild(buttonOne)
+	var body dom.Element
+	body = doc.H(bodyString)
 
 	document.Body().ReplaceWith(body)
 
@@ -80,7 +88,7 @@ func (a *App) KeepAlive() {
 	ws.OnError(dom.EventFunc(a.ctxCancel))
 	ws.OnClose(gws.CloseFunc(a.ctxCancel))
 
-	go gdutil.Periodic(a.ctx, time.Second, func() (ok bool) {
+	gdutil.Periodic(a.ctx, time.Second, func() (ok bool) {
 		if err := ws.SendBinary([]byte("keepalive")); err == nil {
 			ok = true
 		} else {

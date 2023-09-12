@@ -28,6 +28,7 @@ func TestElement_Remove(t *testing.T) {
 	a := assert.New(t)
 	d := Document()
 	div := d.DocApi().El("div", &Attribute{Name: "id", Value: name})
+	div.AddEventListener("eventName", func(event Value) {})
 
 	isNull := func(elementId string) bool {
 		return d.This().Call("getElementById", elementId).IsNull()
@@ -76,4 +77,11 @@ func TestElement_ReplaceWith(t *testing.T) {
 	a.True(isNull(divOneId))
 	a.True(!isNull(divTwoId))
 
+}
+
+func TestElement_Parent(t *testing.T) {
+	a := assert.New(t)
+	elem := Document().DocApi().H("<div><p/></div>")
+	pElem := elem.ChildNodes()[0].(*element)
+	a.Equal("div", pElem.Parent())
 }

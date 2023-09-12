@@ -25,6 +25,7 @@ type node struct {
 	nodeName string
 	ns       string
 	children []Node
+	cleanup  []func()
 }
 
 func (d *node) This() Value        { return d.this }
@@ -49,10 +50,12 @@ func (d *node) AddEventListener(eventType string, fn OnEvent) func() {
 		return nil
 	})
 	d.this.Call("addEventListener", eventType, jsFunc)
-	return func() {
+	f := func() {
 		d.this.Call("removeEventListener", eventType, jsFunc)
 		jsFunc.Release()
 	}
+	d.cleanup = append(d.cleanup, f)
+	return f
 }
 
 func (d *node) String() string {
