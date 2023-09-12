@@ -83,5 +83,5 @@ func TestElement_Parent(t *testing.T) {
 	a := assert.New(t)
 	elem := Document().DocApi().H("<div><p/></div>")
 	pElem := elem.ChildNodes()[0].(*element)
-	a.Equal("div", pElem.Parent())
+	a.Equal("div", pElem.Parent().NodeName())
 }
