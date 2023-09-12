@@ -102,9 +102,11 @@ func global() Value {
 
 		mockDoc := &mockDocument{}
 		mockDoc.Reset()
-
 		window.Set("document", toValue(mockDoc))
 		globalThisVar.Set("window", window)
+
+		globalThisVar.Set("console", toValue(&consoleValue{}))
+
 		globalThisVar.Set("Object", &value{t: TypeFunction, v: &ValueObject{}})
 		globalThisVar.Set("NaN", &value{t: TypeNumber, v: ValueNaN{}})
 	}

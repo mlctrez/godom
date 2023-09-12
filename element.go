@@ -14,6 +14,7 @@ type Element interface {
 	ReplaceWith(replacement Node)
 	SetParent(parent Element)
 	Parent() Element
+	GetElementsByTagName(tag string) []Element
 }
 
 var _ Element = (*element)(nil)
@@ -74,6 +75,19 @@ func (e *element) SetParent(parent Element) {
 
 func (e *element) Parent() Element {
 	return e.parent
+}
+
+func (e *element) GetElementsByTagName(tag string) []Element {
+	var result []Element
+	if e.NodeName() == tag {
+		result = append(result, e)
+	}
+	for _, child := range e.children {
+		if childEl, ok := child.(*element); ok {
+			result = append(result, childEl.GetElementsByTagName(tag)...)
+		}
+	}
+	return result
 }
 
 func ElementFromValue(value Value) Element {

@@ -2,6 +2,7 @@ package godom
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -84,4 +85,16 @@ func TestElement_Parent(t *testing.T) {
 	elem := Document().DocApi().H("<div><p/></div>")
 	pElem := elem.ChildNodes()[0].(*element)
 	a.Equal("div", pElem.Parent().NodeName())
+}
+
+func TestElement_GetElementsByTagName(t *testing.T) {
+	a := require.New(t)
+	h := Document().DocApi().H("<div><span/><span/><div><span/></div></div>")
+	elems := h.GetElementsByTagName("span")
+	a.Equal(3, len(elems))
+
+	h = Document().DocApi().H("<div><p/><p/><div><p/></div></div>")
+	elems = h.GetElementsByTagName("p")
+	a.Equal(3, len(elems))
+
 }
