@@ -7,8 +7,8 @@ import (
 
 func TestNode_Marshal(t *testing.T) {
 	enc := NewEncoder(&bytes.Buffer{})
-	node := &node{nodeName: "node"}
-	xml := node.Marshal(enc).Xml()
+	n := &node{nodeName: "node"}
+	xml := n.Marshal(enc).Xml()
 	if "<node/>" != xml {
 		t.Fatal("expected <node/> but got" + xml)
 	}

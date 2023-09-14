@@ -1,6 +1,8 @@
 package godom
 
-import "strings"
+import (
+	"strings"
+)
 
 // Text is described by https://developer.mozilla.org/en-US/docs/Web/API/Text
 type Text interface {

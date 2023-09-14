@@ -27,7 +27,7 @@ type AppEvent struct {
 }
 
 func (e *AppEvent) handleEvent(event dom.Value) {
-	dom.Console().Log("%s %o %o", e.dataGo, event, e.el)
+	dom.Console().Log("%s %o %o", e.dataGo, event, e.el.This())
 }
 
 // Run is the main entry point
