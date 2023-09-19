@@ -17,6 +17,7 @@ func Test(ctx context.Context) (err error) {
 	if err = setupBuildDir(); err != nil {
 		return err
 	}
+
 	goSteps := [][]string{
 		{"test", "-race", "-covermode", "atomic", "./...", "-args", pathArg("test.gocoverdir")},
 		{"wasm", "test", "-covermode", "atomic", "./...", "-args", pathArg("test.gocoverdir")},
@@ -36,10 +37,13 @@ func Test(ctx context.Context) (err error) {
 			return err
 		}
 	}
+
+	if err = removeCovFiles(); err != nil {
+		return err
+	}
 	if err = summarizeCoverage(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -88,15 +92,20 @@ func setupBuildDir() (err error) {
 	if err = os.MkdirAll("build", 0755); err != nil {
 		return err
 	}
-	buildDir, err = filepath.Abs("build")
-	if err != nil {
+	if buildDir, err = filepath.Abs("build"); err != nil {
 		return err
 	}
-	err = rmFiles(
+	if err = removeCovFiles(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func removeCovFiles() (err error) {
+	if err = rmFiles(
 		filepath.Join(buildDir, "covcounters*"),
 		filepath.Join(buildDir, "covmeta*"),
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
 	return nil
@@ -124,7 +133,7 @@ func goCmd(outputSink cmdrunner.OutputSink, wasm bool, args ...string) (err erro
 	if wasm {
 		command.Env = append(os.Environ(), "GOOS=js", "GOARCH=wasm")
 	}
-	fmt.Println(wasm, command.Args)
+	fmt.Println(strings.Join(command.Args, " "), fmt.Sprintf("(wasm=%t)", wasm))
 	return cmd(command, outputSink)
 }
 

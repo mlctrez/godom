@@ -1,20 +1,14 @@
 package main
 
 import (
-	"context"
 	_ "embed"
 	dom "github.com/mlctrez/godom"
-	"github.com/mlctrez/godom/gdutil"
-	"github.com/mlctrez/godom/gfet"
-	"github.com/mlctrez/godom/gws"
+	"github.com/mlctrez/godom/app/base"
 	"strings"
-	"time"
 )
 
 type App struct {
-	ctx       context.Context
-	ctxCancel context.CancelFunc
-	ws        gws.WebSocket
+	base.App
 }
 
 //go:embed body.html
@@ -31,10 +25,7 @@ func (e *AppEvent) handleEvent(event dom.Value) {
 }
 
 // Run is the main entry point
-func (a *App) Run() {
-	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
-
-	go a.KeepAlive()
+func Run() {
 	c := dom.Console()
 
 	document := dom.Document()
@@ -53,48 +44,8 @@ func (a *App) Run() {
 
 	document.Body().ReplaceWith(doc.H(bodyString))
 
-	<-a.ctx.Done()
-	a.tryReconnect()
-}
-
-func (a *App) tryReconnect() {
-	endAt := time.Now().Add(time.Second * 5)
-	for {
-		href := dom.Global().Get("location").Get("href").String()
-		req := &gfet.Request{URL: href, Method: "OPTIONS"}
-		_, err := req.Fetch()
-		if err == nil || time.Now().After(endAt) {
-			break
-		}
-		time.Sleep(time.Millisecond * time.Duration(500))
-	}
-	dom.Global().Get("location").Call("reload")
-}
-
-func (a *App) KeepAlive() {
-
-	onBinary := func(message []byte) {
-		if string(message) == "wasm" {
-			a.ctxCancel()
-		}
-	}
-
-	ws := gws.New(gws.Rel("ws"))
-	a.ws = ws
-	ws.OnBinaryMessage(onBinary)
-	ws.OnError(dom.EventFunc(a.ctxCancel))
-	ws.OnClose(gws.CloseFunc(a.ctxCancel))
-
-	gdutil.Periodic(a.ctx, time.Second, func() (ok bool) {
-		if err := ws.SendBinary([]byte("keepalive")); err == nil {
-			ok = true
-		} else {
-			a.ctxCancel()
-		}
-		return ok
-	})
 }
 
 func main() {
-	(&App{}).Run()
+	(&App{}).RunMain(Run)
 }
