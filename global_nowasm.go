@@ -2,7 +2,10 @@
 
 package godom
 
+import "sync"
+
 var globalThisVar Value
+var globalThisMu sync.Mutex
 
 type mockObject struct {
 	props      map[string]interface{}
@@ -95,7 +98,8 @@ func (m *mockElement) AppendChild(child Value) {
 }
 
 func global() Value {
-	// TODO: locking
+	globalThisMu.Lock()
+	defer globalThisMu.Unlock()
 	if globalThisVar == nil {
 		globalThisVar = toValue(&globalThis{})
 		window := toValue(&mockWindow{})

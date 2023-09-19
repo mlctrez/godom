@@ -44,6 +44,14 @@ func TestGlobal_Body(t *testing.T) {
 	Document().This().Call("reset")
 }
 
+func TestGlobal_Head(t *testing.T) {
+	a := require.New(t)
+	a.NotPanics(func() { Document().Head() })
+	Document().DocumentElement().(*element).children = nil
+	a.Panics(func() { Document().Head() })
+	Document().This().Call("reset")
+}
+
 func TestGlobal_GetElementById(t *testing.T) {
 	a := require.New(t)
 	doc := Document()
@@ -51,5 +59,4 @@ func TestGlobal_GetElementById(t *testing.T) {
 	doc.Body().AppendChild(h)
 	a.True(doc.This().Call("getElementById", "foo").IsNull())
 	a.False(doc.This().Call("getElementById", "idOne").IsNull())
-
 }

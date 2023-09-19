@@ -5,6 +5,7 @@ go 1.21.0
 require (
 	github.com/andybalholm/brotli v1.0.5
 	github.com/cskr/pubsub v1.0.2
+	github.com/mlctrez/cmdrunner v1.2.0
 	github.com/mlctrez/wasmexec v1.0.10
 	github.com/rjeczalik/notify v0.9.3
 	nhooyr.io/websocket v1.8.7

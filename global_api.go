@@ -1,5 +1,9 @@
 package godom
 
+import (
+	"fmt"
+)
+
 func Global() Value {
 	return global()
 }
@@ -10,6 +14,7 @@ type DocumentApi interface {
 	CreateElementNS(tag string, ns string) Element
 	CreateTextNode(text string) Text
 	DocumentElement() Element
+	Head() Element
 	Body() Element
 	EventListener
 	DocApi() Doc
@@ -40,13 +45,21 @@ func (d *document) DocumentElement() Element {
 	return ElementFromValue(d.this.Get("documentElement"))
 }
 
+func (d *document) Head() (body Element) {
+	return d.child("head")
+}
+
 func (d *document) Body() (body Element) {
+	return d.child("body")
+}
+
+func (d *document) child(tag string) (body Element) {
 	for _, child := range d.DocumentElement().ChildNodes() {
-		if child.NodeName() == "body" {
+		if child.NodeName() == tag {
 			return child.(*element)
 		}
 	}
-	panic("unable to locate body")
+	panic(fmt.Sprintf("unable to locate %s", tag))
 }
 
 func Document() DocumentApi {

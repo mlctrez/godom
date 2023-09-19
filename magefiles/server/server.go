@@ -1,30 +1,23 @@
-package main
+package server
 
 import (
 	"context"
 	"fmt"
-	"github.com/andybalholm/brotli"
-	"github.com/cskr/pubsub"
-	"github.com/mlctrez/wasmexec"
-	"github.com/rjeczalik/notify"
-	"log"
 	"magefiles/watcher"
 	"net/http"
-	"nhooyr.io/websocket"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/andybalholm/brotli"
+	"github.com/cskr/pubsub"
+	"github.com/mlctrez/wasmexec"
+	"github.com/rjeczalik/notify"
+	"nhooyr.io/websocket"
 )
 
 var pubSub = pubsub.New(10)
-
-func main() {
-	err := DevServer()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func DevServer() (err error) {
 
@@ -60,12 +53,12 @@ func BuildWasm() error {
 	if err != nil {
 		return fmt.Errorf("error building wasm: %s\n%s\n", err, string(output))
 	}
-	var stat os.FileInfo
-	stat, err = os.Stat("build/app.wasm")
-	if err != nil {
-		return fmt.Errorf("error getting wasm size: %s\n", err)
-	}
-	fmt.Println("wasm size", stat.Size())
+	//var stat os.FileInfo
+	//stat, err = os.Stat("build/app.wasm")
+	//if err != nil {
+	//	return fmt.Errorf("error getting wasm size: %s\n", err)
+	//}
+	//fmt.Println("wasm size", stat.Size())
 	return nil
 }
 
@@ -86,13 +79,13 @@ func Wasm(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	writer.Header().Set("Content-Type", "application/wasm")
-	if strings.Contains(request.Header.Get("Accept-Encoding"), "sbr") {
+	if strings.Contains(request.Header.Get("Accept-Encoding"), "br") {
 		writer.Header().Set("Content-Encoding", "br")
-		start := time.Now()
+		//start := time.Now()
 		brWriter := brotli.NewWriterLevel(writer, brotli.DefaultCompression)
 		_, _ = brWriter.Write(file)
 		_ = brWriter.Flush()
-		fmt.Println("compression took", time.Since(start).String())
+		//fmt.Println("compression took", time.Since(start).String())
 	} else {
 		_, _ = writer.Write(file)
 	}
@@ -188,6 +181,6 @@ var indexHtml = `<!DOCTYPE html>
 </html>
 `
 
-func AppJs(writer http.ResponseWriter, request *http.Request) {
+func AppJs(writer http.ResponseWriter, _ *http.Request) {
 	wasmexec.WriteLauncher(writer)
 }

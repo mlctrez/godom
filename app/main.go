@@ -51,10 +51,7 @@ func (a *App) Run() {
 		}
 	}
 
-	var body dom.Element
-	body = doc.H(bodyString)
-
-	document.Body().ReplaceWith(body)
+	document.Body().ReplaceWith(doc.H(bodyString))
 
 	<-a.ctx.Done()
 	a.tryReconnect()
