@@ -30,6 +30,7 @@ func TestElement_Remove(t *testing.T) {
 	d := Document()
 	div := d.DocApi().El("div", &Attribute{Name: "id", Value: name})
 	div.AddEventListener("eventName", func(event Value) {})
+	div.AppendChild(d.DocApi().El("p"))
 
 	isNull := func(elementId string) bool {
 		return d.This().Call("getElementById", elementId).IsNull()

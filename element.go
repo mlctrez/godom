@@ -27,6 +27,7 @@ type element struct {
 
 func (e *element) ReplaceWith(n Node) {
 	e.this.Call("replaceWith", n.This())
+	e.Remove()
 }
 
 func (e *element) SetAttribute(name string, value interface{}) {
@@ -44,9 +45,12 @@ func (e *element) RemoveChild(child Value) {
 }
 
 func (e *element) Remove() {
-	for _, f := range e.cleanup {
-		f()
+	for _, child := range e.children {
+		if el, ok := child.(Element); ok {
+			el.Remove()
+		}
 	}
+	e.cleanUp()
 	e.this.Call("remove")
 }
 

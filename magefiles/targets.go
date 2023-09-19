@@ -149,5 +149,5 @@ func cmd(command *exec.Cmd, outputSink cmdrunner.OutputSink) (err error) {
 }
 
 func Server(ctx context.Context) (err error) {
-	return server.DevServer()
+	return server.DevServer(ctx)
 }

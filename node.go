@@ -58,6 +58,12 @@ func (d *node) AddEventListener(eventType string, fn OnEvent) func() {
 	return f
 }
 
+func (d *node) cleanUp() {
+	for _, f := range d.cleanup {
+		f()
+	}
+}
+
 func (d *node) String() string {
 	return fmt.Sprintf("Node:%s", d.nodeName)
 }

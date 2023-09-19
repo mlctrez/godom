@@ -11,7 +11,7 @@ import (
 // Doc is a helper class for working with the Document interface.
 type Doc struct {
 	Doc      Value
-	CallBack func(e Element, dataGo []string)
+	CallBack func(e Element, dataGo string)
 }
 
 // El creates a new element with optional attributes.
@@ -19,14 +19,15 @@ func (d Doc) El(tag string, attributes ...*Attribute) Element {
 	c := ElementFromValue(d.Doc.Call("createElement", tag))
 	var dataGo []string
 	for _, a := range attributes {
-		if a.Name == "data-go" {
+		if a.Name == "data-go" || a.Name == "go" {
 			dataGo = append(dataGo, a.Value.(string))
-		} else {
-			c.SetAttribute(a.Name, a.Value)
 		}
+		c.SetAttribute(a.Name, a.Value)
 	}
-	if dataGo != nil {
-		d.CallBack(c, dataGo)
+	if d.CallBack != nil {
+		for _, dg := range dataGo {
+			d.CallBack(c, dg)
+		}
 	}
 	return c
 }

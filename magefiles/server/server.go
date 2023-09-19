@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"magefiles/watcher"
 	"net/http"
 	"os"
@@ -19,7 +20,7 @@ import (
 
 var pubSub = pubsub.New(10)
 
-func DevServer() (err error) {
+func DevServer(ctx context.Context) (err error) {
 
 	if err = BuildWasm(); err != nil {
 		return err
@@ -32,7 +33,7 @@ func DevServer() (err error) {
 	go w.Run()
 
 	fmt.Println("dev server running on http://localhost:8080")
-	Server()
+	Server(ctx)
 
 	return nil
 }
@@ -62,13 +63,23 @@ func BuildWasm() error {
 	return nil
 }
 
-func Server() {
+func Server(ctx context.Context) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", Index)
 	mux.HandleFunc("/app.js", AppJs)
 	mux.HandleFunc("/app.wasm", Wasm)
 	mux.HandleFunc("/ws", Echo)
-	_ = http.ListenAndServe(":8080", mux)
+
+	server := &http.Server{Handler: mux, Addr: ":8080"}
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}()
+	<-ctx.Done()
+	_ = server.Shutdown(context.TODO())
 }
 
 func Wasm(writer http.ResponseWriter, request *http.Request) {
