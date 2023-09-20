@@ -14,6 +14,7 @@ type App struct {
 	ctxCancel context.CancelFunc
 	Global    dom.Value
 	Window    dom.Value
+	Document  dom.DocumentApi
 	events    chan dom.Value
 	ws        gws.WebSocket
 }
@@ -34,6 +35,7 @@ func (a *App) eventHandlers() func() {
 
 func (a *App) click(this dom.Value, args []dom.Value) any {
 	event := args[0]
+	//a.Window.Get("console").Call("log", this)
 	target := event.Get("target")
 	if !target.Truthy() {
 		a.Window.Get("console").Call("error", "target", event)
@@ -66,6 +68,7 @@ func (a *App) RunMain(eventHandler func(value dom.Value)) {
 	a.events = make(chan dom.Value, 100)
 	a.Global = dom.Global()
 	a.Window = a.Global.Get("window")
+	a.Document = dom.Document()
 
 	// TODO: add ability to turn this on and off
 	go a.KeepAlive()

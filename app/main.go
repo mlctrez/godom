@@ -1,11 +1,10 @@
 package main
 
 import (
-	_ "embed"
-	"fmt"
 	dom "github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app/base"
 	"net/url"
+	"time"
 )
 
 type App struct {
@@ -15,16 +14,17 @@ type App struct {
 
 func main() {
 	a := &App{}
-	a.RunMain(a.handleEvent)
+	a.RunMain(a.eventHandler)
 }
 
-func (a *App) handleEvent(value dom.Value) {
+func (a *App) eventHandler(value dom.Value) {
 	console := a.Window.Get("console")
-	//console.Call("log", "handleEvent", value)
+	//console.Call("log", "eventHandler", value)
 	if value.InstanceOf(a.Global.Get("Location")) {
 		u, err := url.Parse(value.Get("href").String())
 		if err != nil {
 			console.Call("error", err.Error())
+			return
 		}
 		a.navigate(u)
 	}
@@ -36,36 +36,40 @@ func (a *App) handleEvent(value dom.Value) {
 	}
 }
 
-func (a *App) navigate(u *url.URL) {
-	//fmt.Println(u)
-
-	document := dom.Document()
-	doc := dom.Document().DocApi()
-	doc.CallBack = func(e dom.Element, dataGo string) {
+func (a *App) docCallback(e dom.Element, name, value string) {
+	if value == "buttonOne" {
 		e.AddEventListener("click", func(event dom.Value) {
-			fmt.Println(e, dataGo)
+			e.SetAttribute("disabled", true)
+			go time.AfterFunc(time.Second*1, func() {
+				e.ReplaceWith(a.Document.DocApi().T("the button was replaced " + name))
+			})
 		})
 	}
+}
+
+func (a *App) navigate(u *url.URL) {
+	doc := dom.Document().DocApi()
+	doc.CallBack = a.docCallback
 	previousBody := a.body
 	if previousBody == nil {
-		previousBody = document.Body()
+		previousBody = a.Document.Body()
 	}
 
 	switch u.Path {
-	case "/":
-		a.body = doc.H(`<body>` +
-			`<a href="/two">page two</a>` +
-			`<p>This is the index page</p>` +
-			`<a href="https://github.com/mlctrez/godom/">outside url</a>` +
-			`<br/><button go="buttonOne">click me</button>` +
-			`</body>`)
-
 	case "/two":
 		a.body = doc.H(`<body>` +
 			`<a href="/">index page</a>` +
 			`<p>This is page two</p>` +
 			`</body>`)
+	default:
+		a.body = doc.H(`<body>` +
+			`<a href="/two">page two</a>` +
+			`<p>This is the index page</p>` +
+			`<a href="https://github.com/mlctrez/godom/">outside url</a>` +
+			`<br/>` +
+			`</body>`)
+		a.body.AppendChild(doc.H(`<button go="buttonOne">click me</button>`))
+
 	}
 	previousBody.ReplaceWith(a.body)
-
 }

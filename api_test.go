@@ -92,9 +92,9 @@ func TestDoc_El_datago(t *testing.T) {
 	a := assert.New(t)
 	api := Document().DocApi()
 	var dataGoRef string
-	api.CallBack = func(e Element, dataGo string) {
+	api.CallBack = func(e Element, name, value string) {
 		a.Equal("div", e.NodeName())
-		dataGoRef = dataGo
+		dataGoRef = value
 	}
 	api.H(`<div data-go="data-go-value"/>`)
 	a.Equal("data-go-value", dataGoRef)

@@ -5,28 +5,25 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 )
 
 // Doc is a helper class for working with the Document interface.
 type Doc struct {
 	Doc      Value
-	CallBack func(e Element, dataGo string)
+	CallBack func(e Element, name, data string)
 }
+
+var dataGoRegex = regexp.MustCompile("^data-go.*?|go.*?")
 
 // El creates a new element with optional attributes.
 func (d Doc) El(tag string, attributes ...*Attribute) Element {
 	c := ElementFromValue(d.Doc.Call("createElement", tag))
-	var dataGo []string
 	for _, a := range attributes {
-		if a.Name == "data-go" || a.Name == "go" {
-			dataGo = append(dataGo, a.Value.(string))
-		}
 		c.SetAttribute(a.Name, a.Value)
-	}
-	if d.CallBack != nil {
-		for _, dg := range dataGo {
-			d.CallBack(c, dg)
+		if d.CallBack != nil && dataGoRegex.MatchString(a.Name) {
+			d.CallBack(c, strings.TrimPrefix(a.Name, "data-"), a.Value.(string))
 		}
 	}
 	return c
