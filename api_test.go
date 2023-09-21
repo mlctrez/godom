@@ -88,6 +88,18 @@ func TestDoc_directive(t *testing.T) {
 
 }
 
+func TestDoc_noParent(t *testing.T) {
+	a := require.New(t)
+	doc := Document().DocApi()
+	decodeString := func(s string) (Node, error) {
+		return doc.Decode(xml.NewDecoder(bytes.NewBufferString(s)))
+	}
+	_, err := decodeString("foo")
+	a.NotNil(err)
+	a.ErrorContains(err, "no parent element")
+
+}
+
 func TestDoc_El_datago(t *testing.T) {
 	a := assert.New(t)
 	api := Document().DocApi()

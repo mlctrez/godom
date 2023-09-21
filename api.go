@@ -3,6 +3,7 @@ package godom
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -86,6 +87,9 @@ func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
 		case xml.CharData:
 			charBuffer.Write(x)
 		}
+	}
+	if len(parents) == 0 {
+		err = errors.New("no parent elements")
 	}
 	if err != io.EOF && err != nil {
 		return nil, err

@@ -38,8 +38,8 @@ func (a *App) eventHandler(value dom.Value) {
 }
 
 func (a *App) docCallback(e dom.Element, name, value string) {
+	doc := a.Document.DocApi()
 	if value == "buttonOne" {
-		doc := a.Document.DocApi()
 		e.AddEventListener("click", func(event dom.Value) {
 			e.SetAttribute("disabled", true)
 			go time.AfterFunc(time.Second*1, func() {
@@ -50,6 +50,24 @@ func (a *App) docCallback(e dom.Element, name, value string) {
 					el.ReplaceWith(doc.H(`<button go="buttonOne">click me</button>`))
 				})
 			})
+		})
+	}
+	if value == "wysiwyg" {
+		e.AddEventListener("input", func(event dom.Value) {
+			var targetDiv dom.Element
+			for _, el := range e.Parent().ChildNodes() {
+				if div, ok := el.(dom.Element); ok {
+					if div.This().Call("getAttribute", "id").String() == "wysiwyg-target" {
+						targetDiv = div.(dom.Element)
+					}
+				}
+			}
+			for _, node := range targetDiv.ChildNodes() {
+				if el, ok := node.(dom.Element); ok {
+					el.Remove()
+				}
+			}
+			targetDiv.AppendChild(doc.H(event.Get("target").Get("value").String()))
 		})
 	}
 }
@@ -67,6 +85,8 @@ func (a *App) navigate(u *url.URL) {
 		a.body = doc.H(`<body>` +
 			`<a href="/">index page</a>` +
 			`<p>Edit page</p>` +
+			`<textarea go="wysiwyg" rows="25" cols="80"></textarea>` +
+			`<hr/><div id="wysiwyg-target"></div>` +
 			`</body>`)
 	case "/two":
 		a.body = doc.H(`<body>` +
