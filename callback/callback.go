@@ -5,14 +5,20 @@ import (
 	"reflect"
 )
 
-func Reflect(s any) func(e godom.Element, name, data string) {
+func Reflect(ptr any) func(e godom.Element, name, data string) {
 	m := make(map[string]func(godom.Element))
-	elem := reflect.TypeOf(s).Elem()
+	if ptr == nil {
+		panic("nil ptr")
+	}
+	if reflect.ValueOf(ptr).Kind() != reflect.Ptr {
+		panic("ptr must be pointer")
+	}
+	elem := reflect.TypeOf(ptr).Elem()
 	for outer := 0; outer < elem.NumField(); outer++ {
 		i := outer
 		goName := elem.Field(i).Tag.Get("go")
 		if goName != "" {
-			field := reflect.ValueOf(s).Elem().Field(i)
+			field := reflect.ValueOf(ptr).Elem().Field(i)
 			m[goName] = func(eIn godom.Element) { field.Set(reflect.ValueOf(eIn)) }
 		}
 	}
