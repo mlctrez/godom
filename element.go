@@ -40,6 +40,13 @@ func (e *element) NodeType() NodeType {
 	return NodeTypeElement
 }
 
+func (e *element) AppendChild(child Node) {
+	e.node.AppendChild(child)
+	if el, ok := child.(Element); ok {
+		el.SetParent(e)
+	}
+}
+
 func (e *element) RemoveChild(child Value) {
 	var updated []Node
 	for _, otherChild := range e.children {

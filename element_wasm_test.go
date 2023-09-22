@@ -83,8 +83,14 @@ func TestElement_ReplaceWith(t *testing.T) {
 
 func TestElement_Parent(t *testing.T) {
 	a := assert.New(t)
-	elem := Document().DocApi().H("<div><p/></div>")
+	doc := Document().DocApi()
+	elem := doc.H("<div><p/></div>")
 	pElem := elem.ChildNodes()[0].(*element)
+	a.Equal("div", pElem.Parent().NodeName())
+
+	elem = doc.H("<div/>")
+	elem.AppendChild(doc.H("<p/>"))
+	pElem = elem.ChildNodes()[0].(*element)
 	a.Equal("div", pElem.Parent().NodeName())
 }
 
