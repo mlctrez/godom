@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/mlctrez/cmdrunner"
-	"magefiles/server"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -146,8 +145,4 @@ func cmd(command *exec.Cmd, outputSink cmdrunner.OutputSink) (err error) {
 		return fmt.Errorf("%+v exit code %d", command.Args, exit)
 	}
 	return nil
-}
-
-func Server(ctx context.Context) (err error) {
-	return server.DevServer(ctx)
 }
