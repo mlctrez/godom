@@ -127,7 +127,7 @@ func (s *Server) defaultRoute(writer http.ResponseWriter, request *http.Request)
 	doc := document.DocApi()
 
 	html := doc.El("html", doc.At("lang", "en"))
-	head := doc.H(`<head><meta charset="UTF-8"/><title>Index</title>
+	head := doc.H(`<head><meta charset="UTF-8"/><title>TODO</title>
     <script type="application/javascript" src="app.js"></script>
 </head>`)
 	ctx := &app.Context{Doc: doc, URL: request.URL, Events: nil}
@@ -159,7 +159,6 @@ func (s *Server) Wasm(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		_, _ = writer.Write(file)
 	}
-
 }
 
 func (s *Server) Echo(writer http.ResponseWriter, request *http.Request) {

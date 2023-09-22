@@ -103,5 +103,15 @@ func TestElement_GetElementsByTagName(t *testing.T) {
 	h = Document().DocApi().H("<div><p/><p/><div><p/></div></div>")
 	elems = h.GetElementsByTagName("p")
 	a.Equal(3, len(elems))
+}
 
+func TestElement_RemoveAttribute(t *testing.T) {
+	a := require.New(t)
+	doc := Document().DocApi()
+	h := doc.H(`<div id="removeThisId"/>`)
+	a.False(h.This().Call("getAttribute", "id").IsNull())
+
+	a.Equal("removeThisId", h.This().Call("getAttribute", "id").String())
+	h.RemoveAttribute("id")
+	a.True(h.This().Call("getAttribute", "id").IsNull())
 }
