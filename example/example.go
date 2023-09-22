@@ -2,38 +2,42 @@ package example
 
 import (
 	"github.com/mlctrez/godom"
-	"github.com/mlctrez/godom/gsrv/api"
+	"github.com/mlctrez/godom/app"
 	"time"
 )
 
-var _ api.Handler = (*Example)(nil)
+var _ app.Handler = (*example)(nil)
 
-type Example struct {
+type example struct {
 }
 
-func (e *Example) Prepare(ctx *api.ServerContext) {
+func New() app.Handler {
+	return &example{}
+}
+
+func (e *example) Prepare(ctx *app.ServerContext) {
 	ctx.Main = "example/bin/main.go"
 	ctx.Output = "build/app.wasm"
-	ctx.Watch = []string{"example", "gsrv"}
+	ctx.Watch = []string{"example", "app"}
 	ctx.Address = ":8080"
 }
 
-func (e *Example) Headers(ctx *api.Context, header godom.Element) {
-	var hasStyle bool
+var style = `<style>
+body { color: white; background-color: black; } 
+</style>`
+
+func (e *example) Headers(ctx *app.Context, header godom.Element) {
 	for _, node := range header.ChildNodes() {
 		if node.NodeName() == "title" {
 			node.This().Set("innerHTML", "godom")
 		}
-		if node.NodeName() == "style" {
-			hasStyle = true
-		}
 	}
-	if !hasStyle {
-		header.AppendChild(ctx.Doc.H(`<style> body { color: white; background-color: black; } </style>`))
+	if len(header.GetElementsByTagName("style")) == 0 {
+		header.AppendChild(ctx.Doc.H(style))
 	}
 }
 
-func (e *Example) Body(ctx *api.Context) godom.Element {
+func (e *example) Body(ctx *app.Context) godom.Element {
 	switch ctx.URL.Path {
 	case "/":
 		return e.index(ctx)
@@ -43,28 +47,63 @@ func (e *Example) Body(ctx *api.Context) godom.Element {
 }
 
 var indexPage = `<body>
-<button go="button">add item</button>
-<ul go="list"/>
+<table>
+<tr>
+  <td><button go="button">example one</button><div go="list"/></td>
+</tr>
+</table>
 </body>`
 
-func (e *Example) index(ctx *api.Context) godom.Element {
+type exampleOne struct {
+	button godom.Element
+	clear  godom.Element
+	list   godom.Element
+}
 
-	em := make(map[string]godom.Element)
-
-	ctx.Doc.CallBack = func(e godom.Element, name, data string) { em[data] = e }
-	page := ctx.Doc.H(indexPage)
-	if len(em) == 2 {
-		em["button"].AddEventListener("click", func(event godom.Value) {
-			list := em["list"]
-
-			list.AppendChild(ctx.Doc.H(`<li>` + time.Now().Format(time.RFC3339Nano) + `</li>`))
-			if len(list.ChildNodes()) > 5 {
-				list.RemoveChild(list.ChildNodes()[0].This())
-			}
-		})
+func (eo *exampleOne) mapper(e godom.Element, name, data string) {
+	if name != "go" {
+		return
 	}
+	switch data {
+	case "button":
+		eo.button = e
+	case "clear":
+		eo.clear = e
+	case "list":
+		eo.list = e
+	}
+}
 
-	return page
+var exOneRow = `<tr><td>
+<button go="button">example one</button>
+<button go="clear">clear</button> 
+<div go="list"/>
+</td></tr>`
+
+func (eo *exampleOne) render(ctx *app.Context) godom.Element {
+	ctx.Doc.CallBack = eo.mapper
+	row := ctx.Doc.H(exOneRow)
+	eo.button.AddEventListener("click", func(event godom.Value) {
+		list := eo.list
+		list.AppendChild(ctx.Doc.El("br"))
+		list.AppendChild(ctx.Doc.H(`<span>` + time.Now().Format(time.RFC3339Nano) + `</span>`))
+		if len(list.ChildNodes()) > 12 {
+			list.RemoveChild(list.ChildNodes()[0].This())
+			list.RemoveChild(list.ChildNodes()[0].This())
+		}
+	})
+	eo.clear.AddEventListener("click", func(event godom.Value) {
+		for len(eo.list.ChildNodes()) > 0 {
+			eo.list.RemoveChild(eo.list.ChildNodes()[0].This())
+		}
+	})
+	return row
+}
+
+func (e *example) index(ctx *app.Context) godom.Element {
+	body := ctx.Doc.H("<body><table></table></body>")
+	body.ChildNodes()[0].AppendChild((&exampleOne{}).render(ctx))
+	return body
 }
 
 var pageNotFound = `<body>

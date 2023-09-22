@@ -2,23 +2,24 @@ package wsm
 
 import (
 	"context"
-	dom "github.com/mlctrez/godom"
-	"github.com/mlctrez/godom/gdutil"
-	"github.com/mlctrez/godom/gfet"
-	"github.com/mlctrez/godom/gsrv/api"
-	"github.com/mlctrez/godom/gws"
 	"net/url"
 	"time"
+
+	"github.com/mlctrez/godom"
+	"github.com/mlctrez/godom/app"
+	"github.com/mlctrez/godom/gdutil"
+	"github.com/mlctrez/godom/gfet"
+	"github.com/mlctrez/godom/gws"
 )
 
-func Run(h api.Handler) {
+func Run(h app.Handler) {
 	a := &App{}
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
 	a.h = h
-	a.events = make(chan api.Event, 100)
-	a.Global = dom.Global()
+	a.events = make(chan app.Event, 100)
+	a.Global = godom.Global()
 	a.Window = a.Global.Get("window")
-	a.Document = dom.Document()
+	a.Document = godom.Document()
 	a.lastBody = a.Document.Body()
 
 	// TODO: add ability to turn this on and off
@@ -31,21 +32,23 @@ func Run(h api.Handler) {
 		u = &url.URL{Path: "/"}
 	}
 
-	a.h.Headers(&api.Context{Doc: a.Document.DocApi(), URL: u}, a.Document.Head())
+	a.h.Headers(&app.Context{Doc: a.Document.DocApi(), URL: u}, a.Document.Head())
 
-	a.events <- &api.Location{URL: u}
+	a.events <- &app.Location{URL: u}
 	for {
 		select {
 		case value := <-a.events:
 			switch v := value.(type) {
-			case *api.Location:
+			case *app.Location:
 				if !v.External && !v.PopState {
 					a.Window.Get("history").Call("pushState", nil, "", v.URL.String())
 				}
 				if !v.External {
-					newBody := a.h.Body(&api.Context{Doc: a.Document.DocApi(), URL: v.URL, Events: a.events})
+					newBody := a.h.Body(&app.Context{Doc: a.Document.DocApi(), URL: v.URL, Events: a.events})
 					a.lastBody.ReplaceWith(newBody)
 					a.lastBody = newBody
+				} else {
+					// TODO: external url handling
 				}
 			}
 		case <-a.ctx.Done():
@@ -59,24 +62,24 @@ func Run(h api.Handler) {
 type App struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
-	h         api.Handler
-	Global    dom.Value
-	Window    dom.Value
-	Document  dom.DocumentApi
-	events    chan api.Event
+	h         app.Handler
+	Global    godom.Value
+	Window    godom.Value
+	Document  godom.DocumentApi
+	events    chan app.Event
 	ws        gws.WebSocket
-	lastBody  dom.Element
+	lastBody  godom.Element
 }
 
 func (a *App) eventHandlers() func() {
-	var releases []dom.Func
-	toRelease := func(fn dom.Func) dom.Func {
+	var releases []godom.Func
+	toRelease := func(fn godom.Func) godom.Func {
 		releases = append(releases, fn)
 		return fn
 	}
 
-	a.Window.Set("onclick", toRelease(dom.FuncOf(a.onClick)))
-	a.Window.Set("onpopstate", toRelease(dom.FuncOf(a.onPopState)))
+	a.Window.Set("onclick", toRelease(godom.FuncOf(a.onClick)))
+	a.Window.Set("onpopstate", toRelease(godom.FuncOf(a.onPopState)))
 	// add additional handlers here
 
 	return func() {
@@ -86,7 +89,7 @@ func (a *App) eventHandlers() func() {
 	}
 }
 
-func (a *App) onClick(this dom.Value, args []dom.Value) any {
+func (a *App) onClick(this godom.Value, args []godom.Value) any {
 	event := args[0]
 	target := event.Get("target")
 	if !target.Truthy() {
@@ -108,18 +111,18 @@ func (a *App) onClick(this dom.Value, args []dom.Value) any {
 		}
 		wu, _ := url.Parse(a.Window.Get("location").Get("href").String())
 		if u.Host != wu.Host {
-			a.events <- &api.Location{URL: u, External: true}
+			a.events <- &app.Location{URL: u, External: true}
 		} else {
-			a.events <- &api.Location{URL: u}
+			a.events <- &app.Location{URL: u}
 		}
 		return nil
 	}
 	return nil
 }
 
-func (a *App) onPopState(this dom.Value, args []dom.Value) any {
+func (a *App) onPopState(this godom.Value, args []godom.Value) any {
 	u, _ := url.Parse(a.Window.Get("location").Get("href").String())
-	a.events <- &api.Location{URL: u, PopState: true}
+	a.events <- &app.Location{URL: u, PopState: true}
 	return nil
 }
 
@@ -133,7 +136,7 @@ func (a *App) tryReconnect() {
 		}
 		time.Sleep(time.Millisecond * time.Duration(500))
 	}
-	dom.Global().Get("location").Call("reload")
+	godom.Global().Get("location").Call("reload")
 }
 
 func (a *App) KeepAlive() {
@@ -146,7 +149,7 @@ func (a *App) KeepAlive() {
 			a.ctxCancel()
 		}
 	})
-	a.ws.OnError(dom.EventFunc(a.ctxCancel))
+	a.ws.OnError(godom.EventFunc(a.ctxCancel))
 	a.ws.OnClose(gws.CloseFunc(a.ctxCancel))
 
 	gdutil.Periodic(a.ctx, time.Second, func() (ok bool) {

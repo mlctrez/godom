@@ -4,27 +4,28 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/andybalholm/brotli"
-	"github.com/cskr/pubsub"
-	"github.com/mlctrez/godom"
-	"github.com/mlctrez/godom/gsrv/api"
-	"github.com/mlctrez/godom/watcher"
-	"github.com/mlctrez/wasmexec"
-	"github.com/rjeczalik/notify"
 	"log"
 	"net/http"
-	"nhooyr.io/websocket"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/andybalholm/brotli"
+	"github.com/cskr/pubsub"
+	"github.com/mlctrez/godom"
+	"github.com/mlctrez/godom/app"
+	"github.com/mlctrez/godom/watcher"
+	"github.com/mlctrez/wasmexec"
+	"github.com/rjeczalik/notify"
+	"nhooyr.io/websocket"
 )
 
-func Run(h api.Handler) {
+func Run(h app.Handler) {
 
-	sc := &api.ServerContext{}
+	sc := &app.ServerContext{}
 	h.Prepare(sc)
 
 	// TODO: separate out build and watcher into a component
@@ -68,7 +69,7 @@ func (s *Server) fileChange(info notify.EventInfo) {
 	s.pubSub.Pub("wasm", "build")
 }
 
-func BuildWasm(sc *api.ServerContext) error {
+func BuildWasm(sc *app.ServerContext) error {
 	command := exec.Command("go", "build", "-o", sc.Output, sc.Main)
 	command.Env = append(os.Environ(), "GOARCH=wasm", "GOOS=js")
 	output, err := command.CombinedOutput()
@@ -96,10 +97,10 @@ func contextWithSigterm(ctx context.Context) context.Context {
 }
 
 type Server struct {
-	h            api.Handler
+	h            app.Handler
 	clientNumber int
 	pubSub       *pubsub.PubSub
-	sc           *api.ServerContext
+	sc           *app.ServerContext
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -129,7 +130,7 @@ func (s *Server) defaultRoute(writer http.ResponseWriter, request *http.Request)
 	head := doc.H(`<head><meta charset="UTF-8"/><title>Index</title>
     <script type="application/javascript" src="app.js"></script>
 </head>`)
-	ctx := &api.Context{Doc: doc, URL: request.URL, Events: nil}
+	ctx := &app.Context{Doc: doc, URL: request.URL, Events: nil}
 	s.h.Headers(ctx, head)
 	html.AppendChild(head)
 	html.AppendChild(s.h.Body(ctx))
