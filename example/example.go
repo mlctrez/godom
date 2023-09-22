@@ -1,4 +1,4 @@
-package gsrv
+package example
 
 import (
 	"github.com/mlctrez/godom"
@@ -9,6 +9,13 @@ import (
 var _ api.Handler = (*Example)(nil)
 
 type Example struct {
+}
+
+func (e *Example) Prepare(ctx *api.ServerContext) {
+	ctx.Main = "example/bin/main.go"
+	ctx.Output = "build/app.wasm"
+	ctx.Watch = []string{"example", "gsrv"}
+	ctx.Address = ":8080"
 }
 
 func (e *Example) Headers(ctx *api.Context, header godom.Element) {

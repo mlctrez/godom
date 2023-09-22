@@ -24,21 +24,26 @@ import (
 
 func Run(h api.Handler) {
 
+	sc := &api.ServerContext{}
+	h.Prepare(sc)
+
+	// TODO: separate out build and watcher into a component
 	var err error
-	if err = BuildWasm(); err != nil {
+	if err = BuildWasm(sc); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	s := &Server{h: h, pubSub: pubsub.New(10), clientNumber: 1}
+	s := &Server{h: h, sc: sc, pubSub: pubsub.New(10), clientNumber: 1}
+
 	var w *watcher.Watcher
-	if w, err = watcher.New(s.fileChange, "gsrv"); err != nil {
+	if w, err = watcher.New(s.fileChange, sc.Watch...); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	go w.Run()
 
-	server := &http.Server{Handler: s, Addr: ":8080"}
+	server := &http.Server{Handler: s, Addr: sc.Address}
 	go func() {
 		fmt.Println("dev server running on http://localhost:8080")
 		err = server.ListenAndServe()
@@ -56,15 +61,15 @@ func Run(h api.Handler) {
 
 func (s *Server) fileChange(info notify.EventInfo) {
 	//fmt.Printf("%s file changed %s\n", time.Now().Format(time.RFC3339Nano), info.Path())
-	if err := BuildWasm(); err != nil {
+	if err := BuildWasm(s.sc); err != nil {
 		fmt.Println(strings.TrimSpace(err.Error()))
 		return
 	}
 	s.pubSub.Pub("wasm", "build")
 }
 
-func BuildWasm() error {
-	command := exec.Command("go", "build", "-o", "build/app.wasm", "gsrv/bin/main.go")
+func BuildWasm(sc *api.ServerContext) error {
+	command := exec.Command("go", "build", "-o", sc.Output, sc.Main)
 	command.Env = append(os.Environ(), "GOARCH=wasm", "GOOS=js")
 	output, err := command.CombinedOutput()
 	if err != nil {
@@ -94,47 +99,51 @@ type Server struct {
 	h            api.Handler
 	clientNumber int
 	pubSub       *pubsub.PubSub
+	sc           *api.ServerContext
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+
+	// TODO: revisit if api.Handler should be able to override these
+	//   or provide additional endpoints
+
 	switch request.URL.Path {
 	case "/app.js":
 		AppJs(writer, request)
 	case "/favicon.ico":
 		writer.WriteHeader(http.StatusNotFound)
 	case "/app.wasm":
-		Wasm(writer, request)
+		s.Wasm(writer, request)
 	case "/ws":
 		s.Echo(writer, request)
 	default:
-		document := godom.Document()
-		doc := document.DocApi()
-
-		html := doc.El("html", doc.At("lang", "en"))
-		head := doc.H(`
-<head>
-    <meta charset="UTF-8"/>
-    <title>Index</title>
-    <script type="application/javascript" src="app.js"></script>
-</head>
-`)
-		ctx := &api.Context{Doc: doc, URL: request.URL, Events: nil}
-		s.h.Headers(ctx, head)
-		html.AppendChild(head)
-		html.AppendChild(s.h.Body(ctx))
-		buf := &bytes.Buffer{}
-		enc := godom.NewEncoder(buf)
-		enc.Indent("  ")
-		html.Marshal(enc).Flush()
-		writer.Header().Set("Content-Type", "text/html")
-		buf.WriteString("\n")
-		_, _ = writer.Write(buf.Bytes())
+		s.defaultRoute(writer, request)
 	}
 }
 
-func Wasm(writer http.ResponseWriter, request *http.Request) {
+func (s *Server) defaultRoute(writer http.ResponseWriter, request *http.Request) {
+	document := godom.Document()
+	doc := document.DocApi()
 
-	file, err := os.ReadFile("build/app.wasm")
+	html := doc.El("html", doc.At("lang", "en"))
+	head := doc.H(`<head><meta charset="UTF-8"/><title>Index</title>
+    <script type="application/javascript" src="app.js"></script>
+</head>`)
+	ctx := &api.Context{Doc: doc, URL: request.URL, Events: nil}
+	s.h.Headers(ctx, head)
+	html.AppendChild(head)
+	html.AppendChild(s.h.Body(ctx))
+	buf := &bytes.Buffer{}
+	enc := godom.NewEncoder(buf)
+	enc.Indent("  ")
+	html.Marshal(enc).Flush()
+	buf.WriteString("\n")
+	writer.Header().Set("Content-Type", "text/html")
+	_, _ = writer.Write(buf.Bytes())
+}
+
+func (s *Server) Wasm(writer http.ResponseWriter, request *http.Request) {
+	file, err := os.ReadFile(s.sc.Output)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return

@@ -11,7 +11,15 @@ type Context struct {
 	Events chan Event
 }
 
+type ServerContext struct {
+	Main    string
+	Output  string
+	Address string
+	Watch   []string
+}
+
 type Handler interface {
+	Prepare(ctx *ServerContext)
 	Headers(ctx *Context, header godom.Element)
 	Body(ctx *Context) godom.Element
 }
