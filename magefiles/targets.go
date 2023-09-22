@@ -16,23 +16,21 @@ func Test(ctx context.Context) (err error) {
 	if err = setupBuildDir(); err != nil {
 		return err
 	}
-
-	goSteps := [][]string{
-		{"test", "-race", "-covermode", "atomic", "./...", "-args", pathArg("test.gocoverdir")},
-		{"wasm", "test", "-covermode", "atomic", "./...", "-args", pathArg("test.gocoverdir")},
-		{"tool", "covdata", "textfmt", pathArg("i"), pathArg("o", "coverage.out")},
-		{"tool", "cover", pathArg("html", "coverage.out"), pathArg("o", "coverage.html")},
+	steps := []struct {
+		args []string
+		wasm bool
+	}{
+		{args: []string{"test", "-race", "-covermode", "atomic", "./...", "-args", pathArg("test.gocoverdir")}},
+		{args: []string{"test", "-covermode", "atomic", "./...", "-args", pathArg("test.gocoverdir")}, wasm: true},
+		{args: []string{"tool", "covdata", "textfmt", pathArg("i"), pathArg("o", "coverage.out")}},
+		{args: []string{"tool", "cover", pathArg("html", "coverage.out"), pathArg("o", "coverage.html")}},
 	}
+
 	outputSink := func(out *cmdrunner.CmdOutput) {
 		fmt.Println(out.Text)
 	}
-	for _, args := range goSteps {
-		var wasm = false
-		if args[0] == "wasm" {
-			wasm = true
-			args = args[1:]
-		}
-		if err = goCmd(outputSink, wasm, args...); err != nil {
+	for _, step := range steps {
+		if err = goCmd(outputSink, step.wasm, step.args...); err != nil {
 			return err
 		}
 	}
