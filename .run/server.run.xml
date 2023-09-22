@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="server" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="godom" />
+    <working_directory value="$PROJECT_DIR$" />
+    <EXTENSION ID="software.aws.toolkits.jetbrains.core.execution.GoAwsConnectionRunConfigurationExtension">
+      <option name="credential" />
+      <option name="region" />
+      <option name="useCurrentConnection" value="false" />
+    </EXTENSION>
+    <kind value="FILE" />
+    <package value="github.com/mlctrez/godom" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/gsrv/bin/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
