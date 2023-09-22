@@ -41,7 +41,15 @@ func (e *element) NodeType() NodeType {
 }
 
 func (e *element) RemoveChild(child Value) {
-	e.this.Call("removeChild", child)
+	var updated []Node
+	for _, otherChild := range e.children {
+		if otherChild.This().Equal(child) {
+			e.this.Call("removeChild", child)
+			continue
+		}
+		updated = append(updated, otherChild)
+	}
+	e.children = updated
 }
 
 func (e *element) Remove() {

@@ -100,6 +100,8 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	switch request.URL.Path {
 	case "/app.js":
 		AppJs(writer, request)
+	case "/favicon.ico":
+		writer.WriteHeader(http.StatusNotFound)
 	case "/app.wasm":
 		Wasm(writer, request)
 	case "/ws":
@@ -109,20 +111,17 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		doc := document.DocApi()
 
 		html := doc.El("html", doc.At("lang", "en"))
-		html.AppendChild(doc.H(`
+		head := doc.H(`
 <head>
     <meta charset="UTF-8"/>
     <title>Index</title>
-    <style>
-        body {
-            color: white;
-            background-color: black;
-        }
-    </style>
     <script type="application/javascript" src="app.js"></script>
 </head>
-`))
-		html.AppendChild(s.h.Body(doc, request.URL))
+`)
+		ctx := &api.Context{Doc: doc, URL: request.URL, Events: nil}
+		s.h.Headers(ctx, head)
+		html.AppendChild(head)
+		html.AppendChild(s.h.Body(ctx))
 		buf := &bytes.Buffer{}
 		enc := godom.NewEncoder(buf)
 		enc.Indent("  ")
@@ -173,7 +172,7 @@ func (s *Server) Echo(writer http.ResponseWriter, request *http.Request) {
 
 	sub := s.pubSub.Sub("build")
 	defer func() {
-		s.pubSub.Unsub(sub, "hello")
+		s.pubSub.Unsub(sub, "build")
 		fmt.Println("pubSub.Unsub client", s.clientNumber)
 	}()
 

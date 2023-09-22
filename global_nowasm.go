@@ -97,6 +97,14 @@ func (m *mockElement) AppendChild(child Value) {
 	m.children = append(m.children, child)
 }
 
+var dummyFunc = func() {}
+
+func (m *mockElement) AddEventListener(eventType string, fn *noWasmFunc) func() {
+	return dummyFunc
+}
+
+func (m *mockElement) RemoveEventListener(eventType string, fn *noWasmFunc) {}
+
 func global() Value {
 	globalThisMu.Lock()
 	defer globalThisMu.Unlock()

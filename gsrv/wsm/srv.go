@@ -15,31 +15,38 @@ func Run(h api.Handler) {
 	a := &App{}
 	a.ctx, a.ctxCancel = context.WithCancel(context.Background())
 	a.h = h
-	a.events = make(chan dom.Value, 100)
+	a.events = make(chan api.Event, 100)
 	a.Global = dom.Global()
 	a.Window = a.Global.Get("window")
 	a.Document = dom.Document()
 	a.lastBody = a.Document.Body()
 
-	console := a.Window.Get("console")
-
 	// TODO: add ability to turn this on and off
 	go a.KeepAlive()
 
 	release := a.eventHandlers()
-	a.events <- a.Window.Get("location")
+	u, err := url.Parse(a.Window.Get("location").Get("href").String())
+	if err != nil {
+		a.Window.Get("console").Call("error", "location.href parse error", err.Error())
+		u = &url.URL{Path: "/"}
+	}
+
+	a.h.Headers(&api.Context{Doc: a.Document.DocApi(), URL: u}, a.Document.Head())
+
+	a.events <- &api.Location{URL: u}
 	for {
 		select {
 		case value := <-a.events:
-			if value.InstanceOf(a.Global.Get("Location")) {
-				u, err := url.Parse(value.Get("href").String())
-				if err != nil {
-					console.Call("error", err.Error())
-					return
+			switch v := value.(type) {
+			case *api.Location:
+				if !v.External && !v.PopState {
+					a.Window.Get("history").Call("pushState", nil, "", v.URL.String())
 				}
-				newBody := a.h.Body(a.Document.DocApi(), u)
-				a.lastBody.ReplaceWith(newBody)
-				a.lastBody = newBody
+				if !v.External {
+					newBody := a.h.Body(&api.Context{Doc: a.Document.DocApi(), URL: v.URL, Events: a.events})
+					a.lastBody.ReplaceWith(newBody)
+					a.lastBody = newBody
+				}
 			}
 		case <-a.ctx.Done():
 			release()
@@ -56,7 +63,7 @@ type App struct {
 	Global    dom.Value
 	Window    dom.Value
 	Document  dom.DocumentApi
-	events    chan dom.Value
+	events    chan api.Event
 	ws        gws.WebSocket
 	lastBody  dom.Element
 }
@@ -67,7 +74,11 @@ func (a *App) eventHandlers() func() {
 		releases = append(releases, fn)
 		return fn
 	}
-	a.Window.Set("onclick", toRelease(dom.FuncOf(a.click)))
+
+	a.Window.Set("onclick", toRelease(dom.FuncOf(a.onClick)))
+	a.Window.Set("onpopstate", toRelease(dom.FuncOf(a.onPopState)))
+	// add additional handlers here
+
 	return func() {
 		for _, fn := range releases {
 			fn.Release()
@@ -75,9 +86,8 @@ func (a *App) eventHandlers() func() {
 	}
 }
 
-func (a *App) click(this dom.Value, args []dom.Value) any {
+func (a *App) onClick(this dom.Value, args []dom.Value) any {
 	event := args[0]
-	//a.Window.Get("console").Call("log", this)
 	target := event.Get("target")
 	if !target.Truthy() {
 		a.Window.Get("console").Call("error", "target", event)
@@ -90,18 +100,26 @@ func (a *App) click(this dom.Value, args []dom.Value) any {
 	}
 	if nodeName.String() == "A" {
 		event.Call("preventDefault")
-		func() {
-			defer func() {
-				if recover() != nil {
-					a.events <- event
-				}
-			}()
-			a.Window.Get("history").Call("pushState", nil, "", target.Get("href"))
-			a.events <- a.Window.Get("location")
-		}()
+		href := target.Get("href").String()
+		u, err := url.Parse(href)
+		if err != nil {
+			a.Window.Get("console").Call("error", "target.href", err)
+			return nil
+		}
+		wu, _ := url.Parse(a.Window.Get("location").Get("href").String())
+		if u.Host != wu.Host {
+			a.events <- &api.Location{URL: u, External: true}
+		} else {
+			a.events <- &api.Location{URL: u}
+		}
 		return nil
 	}
-	a.events <- event
+	return nil
+}
+
+func (a *App) onPopState(this dom.Value, args []dom.Value) any {
+	u, _ := url.Parse(a.Window.Get("location").Get("href").String())
+	a.events <- &api.Location{URL: u, PopState: true}
 	return nil
 }
 
@@ -120,24 +138,24 @@ func (a *App) tryReconnect() {
 
 func (a *App) KeepAlive() {
 
-	onBinary := func(message []byte) {
+	a.ws = gws.New(gws.Rel("ws"))
+	defer a.ws.Close()
+
+	a.ws.OnBinaryMessage(func(message []byte) {
 		if string(message) == "wasm" {
 			a.ctxCancel()
 		}
-	}
-
-	ws := gws.New(gws.Rel("ws"))
-	a.ws = ws
-	ws.OnBinaryMessage(onBinary)
-	ws.OnError(dom.EventFunc(a.ctxCancel))
-	ws.OnClose(gws.CloseFunc(a.ctxCancel))
+	})
+	a.ws.OnError(dom.EventFunc(a.ctxCancel))
+	a.ws.OnClose(gws.CloseFunc(a.ctxCancel))
 
 	gdutil.Periodic(a.ctx, time.Second, func() (ok bool) {
-		if err := ws.SendBinary([]byte("keepalive")); err == nil {
+		if err := a.ws.SendBinary([]byte("keepalive")); err == nil {
 			return true
 		} else {
 			a.ctxCancel()
 			return false
 		}
 	})
+
 }

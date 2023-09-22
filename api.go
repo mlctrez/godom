@@ -74,7 +74,7 @@ func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
 		case xml.StartElement:
 			parents = append(parents, startNode(d, x))
 			if len(parents) > 1 {
-				appendChild(parents[len(parents)-2], parents[len(parents)-1])
+				d.AppendChild(parents[len(parents)-2], parents[len(parents)-1])
 			}
 		case xml.EndElement:
 			textData := strings.TrimSpace(charBuffer.pop())
@@ -97,7 +97,7 @@ func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
 	return parents[0], nil
 }
 
-func appendChild(parent, child Element) {
+func (d Doc) AppendChild(parent, child Element) {
 	parent.AppendChild(child)
 	child.SetParent(parent)
 }

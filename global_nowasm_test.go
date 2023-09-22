@@ -60,3 +60,14 @@ func TestGlobal_GetElementById(t *testing.T) {
 	a.True(doc.This().Call("getElementById", "foo").IsNull())
 	a.False(doc.This().Call("getElementById", "idOne").IsNull())
 }
+
+func TestGlobal_AddEventListener(t *testing.T) {
+
+	dummyFunc()
+
+	doc := Document()
+	h := doc.DocApi().H(`<div/>`)
+	doc.Body().AppendChild(h)
+	// just to test that the method can be invoked
+	h.AddEventListener("click", func(event Value) {})()
+}
