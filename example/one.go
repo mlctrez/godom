@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
-	"github.com/mlctrez/godom/bind"
+	"github.com/mlctrez/godom/callback"
 	"os"
 	"time"
 )
@@ -24,10 +24,10 @@ func (eo *exampleOne) callBack() func(e godom.Element, name string, data string)
 	// callBack() can use one or the other
 	if os.Getenv("NO_REFLECTION") != "" {
 		// with tags and reflect
-		return bind.Reflect(eo)
+		return callback.Reflect(eo)
 	} else {
 		// without tags or reflection
-		return bind.Mapper(map[string]func(godom.Element){
+		return callback.Mapper(map[string]func(godom.Element){
 			"button": func(ei godom.Element) { eo.Button = ei },
 			"reset":  func(ei godom.Element) { eo.Reset = ei },
 			"div":    func(ei godom.Element) { eo.Div = ei },
