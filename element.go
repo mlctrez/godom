@@ -11,6 +11,7 @@ type Element interface {
 	Remove()
 	RemoveChild(child Value)
 	SetAttribute(name string, value interface{})
+	RemoveAttribute(name string)
 	ReplaceWith(replacement Node)
 	SetParent(parent Element)
 	Parent() Element
@@ -23,6 +24,10 @@ type element struct {
 	node
 	attributes Attributes
 	parent     Element
+}
+
+func (e *element) RemoveAttribute(name string) {
+	e.This().Call("removeAttribute", name)
 }
 
 func (e *element) ReplaceWith(n Node) {

@@ -136,7 +136,6 @@ func (s *Server) defaultRoute(writer http.ResponseWriter, request *http.Request)
 	html.AppendChild(s.h.Body(ctx))
 	buf := &bytes.Buffer{}
 	enc := godom.NewEncoder(buf)
-	enc.Indent("  ")
 	html.Marshal(enc).Flush()
 	buf.WriteString("\n")
 	writer.Header().Set("Content-Type", "text/html")

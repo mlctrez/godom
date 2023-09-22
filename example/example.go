@@ -1,6 +1,7 @@
 package example
 
 import (
+	"fmt"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
 	"time"
@@ -27,9 +28,9 @@ body { color: white; background-color: black; }
 </style>`
 
 func (e *example) Headers(ctx *app.Context, header godom.Element) {
-	for _, node := range header.ChildNodes() {
+	for i, node := range header.ChildNodes() {
 		if node.NodeName() == "title" {
-			node.This().Set("innerHTML", "godom")
+			header.ChildNodes()[i] = ctx.Doc.H("<title>godom</title>")
 		}
 	}
 	if len(header.GetElementsByTagName("style")) == 0 {
@@ -46,64 +47,62 @@ func (e *example) Body(ctx *app.Context) godom.Element {
 	}
 }
 
-var indexPage = `<body>
-<table>
-<tr>
-  <td><button go="button">example one</button><div go="list"/></td>
-</tr>
-</table>
-</body>`
-
 type exampleOne struct {
 	button godom.Element
-	clear  godom.Element
+	reset  godom.Element
 	list   godom.Element
+}
+
+func (e *example) index(ctx *app.Context) godom.Element {
+	body := ctx.Doc.H("<body><table><tbody/></table></body>")
+	body.GetElementsByTagName("tbody")[0].AppendChild((&exampleOne{}).render(ctx))
+	return body
 }
 
 func (eo *exampleOne) mapper(e godom.Element, name, data string) {
 	if name != "go" {
 		return
 	}
+	// TODO: figure out how to do json style bindings for this
 	switch data {
 	case "button":
 		eo.button = e
-	case "clear":
-		eo.clear = e
+	case "reset":
+		eo.reset = e
 	case "list":
 		eo.list = e
 	}
 }
 
 var exOneRow = `<tr><td>
-<button go="button">example one</button>
-<button go="clear">clear</button> 
-<div go="list"/>
+<button go="button">example one</button><button go="reset">reset</button> 
+<div go="list"></div>
 </td></tr>`
 
 func (eo *exampleOne) render(ctx *app.Context) godom.Element {
-	ctx.Doc.CallBack = eo.mapper
-	row := ctx.Doc.H(exOneRow)
+
+	doc := godom.Doc{Doc: ctx.Doc.Doc, CallBack: eo.mapper}
+	row := doc.H(exOneRow)
+	list := eo.list
 	eo.button.AddEventListener("click", func(event godom.Value) {
-		list := eo.list
-		list.AppendChild(ctx.Doc.El("br"))
-		list.AppendChild(ctx.Doc.H(`<span>` + time.Now().Format(time.RFC3339Nano) + `</span>`))
+		eo.button.SetAttribute("disabled", true)
+		go time.AfterFunc(1*time.Second, func() {
+			eo.button.RemoveAttribute("disabled")
+		})
+		list.AppendChild(doc.El("br"))
+		span := fmt.Sprintf("<span>%s</span>", time.Now().Format(time.RFC3339Nano))
+		list.AppendChild(doc.H(span))
 		if len(list.ChildNodes()) > 12 {
 			list.RemoveChild(list.ChildNodes()[0].This())
 			list.RemoveChild(list.ChildNodes()[0].This())
 		}
 	})
-	eo.clear.AddEventListener("click", func(event godom.Value) {
-		for len(eo.list.ChildNodes()) > 0 {
-			eo.list.RemoveChild(eo.list.ChildNodes()[0].This())
+	eo.reset.AddEventListener("click", func(event godom.Value) {
+		for len(list.ChildNodes()) > 0 {
+			list.RemoveChild(eo.list.ChildNodes()[0].This())
 		}
 	})
 	return row
-}
-
-func (e *example) index(ctx *app.Context) godom.Element {
-	body := ctx.Doc.H("<body><table></table></body>")
-	body.ChildNodes()[0].AppendChild((&exampleOne{}).render(ctx))
-	return body
 }
 
 var pageNotFound = `<body>

@@ -2,7 +2,9 @@
 
 package godom
 
-import "sync"
+import (
+	"sync"
+)
 
 var globalThisVar Value
 var globalThisMu sync.Mutex
@@ -99,11 +101,11 @@ func (m *mockElement) AppendChild(child Value) {
 
 var dummyFunc = func() {}
 
-func (m *mockElement) AddEventListener(eventType string, fn *noWasmFunc) func() {
+func (m *mockElement) AddEventListener(eventType string, fn any) func() {
 	return dummyFunc
 }
 
-func (m *mockElement) RemoveEventListener(eventType string, fn *noWasmFunc) {}
+func (m *mockElement) RemoveEventListener(eventType string, fn any) {}
 
 func global() Value {
 	globalThisMu.Lock()
