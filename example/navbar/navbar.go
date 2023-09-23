@@ -17,13 +17,6 @@ type navbar struct {
 	Form     godom.Element `go:"searchForm"`
 }
 
-func (n *navbar) nav(ctx *app.Context, u string) func(event godom.Value) {
-	return func(event godom.Value) {
-		url, _ := url.Parse(u)
-		ctx.Events <- &app.Location{URL: url}
-	}
-}
-
 func (n *navbar) form(ctx *app.Context) func(event godom.Value) {
 	return func(event godom.Value) {
 		event.Call("preventDefault")
@@ -32,10 +25,6 @@ func (n *navbar) form(ctx *app.Context) func(event godom.Value) {
 			fmt.Println(el.NodeName(), el.This().Get("value").String())
 		}
 	}
-}
-
-type navItem struct {
-	Element godom.Element `go:"element"`
 }
 
 func Render(ctx *app.Context) godom.Element {
@@ -57,6 +46,7 @@ func Render(ctx *app.Context) godom.Element {
 
 	// TODO: this is messy and a bit more code than expected. find a way to simplify.
 	for _, outer := range navItems {
+		// loop vars are bad, escape them
 		item := outer
 
 		ni := doc.H(fmt.Sprintf(navItemFmt, item.Name))
