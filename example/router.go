@@ -27,7 +27,7 @@ func (e *router) Headers(ctx *app.Context, header godom.Element) {
 	}
 	for i, node := range header.ChildNodes() {
 		if node.NodeName() == "title" {
-			// TODO: this needs to be a replace with
+			// TODO: should be able to call ReplaceWith
 			oldTitle := header.ChildNodes()[i]
 			header.ChildNodes()[i] = ctx.Doc.H("<title>godom</title>")
 			oldTitle.(godom.Element).Remove()
