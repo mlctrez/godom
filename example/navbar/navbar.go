@@ -28,7 +28,7 @@ func (n *navbar) form(ctx *app.Context) func(event godom.Value) {
 	return func(event godom.Value) {
 		event.Call("preventDefault")
 		for _, el := range n.Form.GetElementsByTagName("input") {
-			// process form data, fetch request, etc
+			// process form data, do a fetch request, etc.
 			fmt.Println(el.NodeName(), el.This().Get("value").String())
 		}
 	}
