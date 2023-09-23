@@ -3,6 +3,7 @@ package example
 import (
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
+	"github.com/mlctrez/godom/example/demos"
 	"github.com/mlctrez/godom/example/navbar"
 )
 
@@ -66,9 +67,10 @@ func (e *router) index(ctx *app.Context) godom.Element {
 	body := doc.El("body")
 
 	body.AppendChild(navbar.Render(ctx))
-	// TODO: remove example one since it is not used
-	//body := doc.H("<body><table><tbody/></table></body>")
-	//body.GetElementsByTagName("tbody")[0].AppendChild((&exampleOne{}).render(ctx))
+	if ctx.URL.Path == "/" {
+		body.AppendChild(doc.H("<br/>"))
+		body.AppendChild(demos.ExampleOne(ctx))
+	}
 	return body
 }
 

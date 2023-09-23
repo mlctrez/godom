@@ -46,7 +46,13 @@ func Run(h app.Handler) {
 
 	server := &http.Server{Handler: s, Addr: sc.Address}
 	go func() {
-		fmt.Println("dev server running on http://localhost:8080")
+		var message = "dev server running on http" + "://"
+		if strings.HasPrefix(sc.Address, ":") {
+			message += "localhost" + sc.Address
+		} else {
+			message += sc.Address
+		}
+		fmt.Println(message)
 		err = server.ListenAndServe()
 		if err != nil {
 			log.Println(err)
@@ -75,6 +81,14 @@ func BuildWasm(sc *app.ServerContext) error {
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error building wasm: %s\n%s\n", err, string(output))
+	}
+	if sc.ShowWasmSize {
+		var s os.FileInfo
+		s, err = os.Stat(sc.Output)
+		if err != nil {
+			return fmt.Errorf("error getting wasm size: %s\n", err)
+		}
+		fmt.Println("wasm size:", s.Size())
 	}
 	return nil
 }

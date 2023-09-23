@@ -29,9 +29,8 @@ func (n *navbar) form(ctx *app.Context) func(event godom.Value) {
 
 func Render(ctx *app.Context) godom.Element {
 	// TODO: simplify making a new doc context with callback
-	doc := godom.Doc{Doc: godom.Document().This()}
 	nav := &navbar{}
-	doc.CallBack = callback.Reflect(nav)
+	doc := ctx.Doc.WithCallback(callback.Reflect(nav))
 	fragment := doc.H(navbarHtml)
 
 	navItems := []struct {
@@ -50,7 +49,6 @@ func Render(ctx *app.Context) godom.Element {
 		item := outer
 
 		ni := doc.H(fmt.Sprintf(navItemFmt, item.Name))
-		// TODO: add navigation to new location with event listener func
 		ni.ChildNodes()[0].AddEventListener("click", func(event godom.Value) {
 			u, _ := url.Parse(item.Path)
 			ctx.Events <- &app.Location{URL: u}

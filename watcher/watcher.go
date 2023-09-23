@@ -57,8 +57,8 @@ func (w *Watcher) noDupesRunner() {
 				return
 			}
 		}
-		fmt.Printf("%s read eventOne %s %s\n", time.Now().Format(time.RFC3339Nano),
-			eventOne.Path(), eventOne.Event())
+		//fmt.Printf("%s read eventOne %s %s\n", time.Now().Format(time.RFC3339Nano),
+		//	eventOne.Path(), eventOne.Event())
 
 		// look for another event closely following this one, bail after a few ms
 		select {

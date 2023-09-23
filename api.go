@@ -10,37 +10,56 @@ import (
 	"strings"
 )
 
-// Doc is a helper class for working with the Document interface.
-type Doc struct {
-	Doc      Value
-	CallBack func(e Element, name, data string)
+type OnElement func(e Element, name, data string)
+
+type DocApi interface {
+	El(tag string, attributes ...*Attribute) Element
+	At(name string, value interface{}) *Attribute
+	T(text string) Text
+	H(html string) Element
+
+	WithCallback(oe OnElement) DocApi
+	Decode(decoder *xml.Decoder) (Element, error)
+}
+
+func NewDocApi(v Value) DocApi {
+	return &doc{v: v}
+}
+
+type doc struct {
+	v  Value
+	cb OnElement
 }
 
 var dataGoRegex = regexp.MustCompile("^data-go.*?|go.*?")
 
+func (d *doc) WithCallback(cb OnElement) DocApi {
+	return &doc{v: d.v, cb: cb}
+}
+
 // El creates a new element with optional attributes.
-func (d Doc) El(tag string, attributes ...*Attribute) Element {
-	c := ElementFromValue(d.Doc.Call("createElement", tag))
+func (d *doc) El(tag string, attributes ...*Attribute) Element {
+	c := ElementFromValue(d.v.Call("createElement", tag))
 	for _, a := range attributes {
 		c.SetAttribute(a.Name, a.Value)
-		if d.CallBack != nil && dataGoRegex.MatchString(a.Name) {
-			d.CallBack(c, strings.TrimPrefix(a.Name, "data-"), a.Value.(string))
+		if d.cb != nil && dataGoRegex.MatchString(a.Name) {
+			d.cb(c, strings.TrimPrefix(a.Name, "data-"), a.Value.(string))
 		}
 	}
 	return c
 }
 
 // At creates a new attribute.
-func (d Doc) At(name string, value interface{}) *Attribute {
+func (d *doc) At(name string, value interface{}) *Attribute {
 	return &Attribute{Name: name, Value: value}
 }
 
 // T creates a new text with optional attributes.
-func (d Doc) T(text string) Text {
-	return TextFromValue(d.Doc.Call("createTextNode", text))
+func (d *doc) T(text string) Text {
+	return TextFromValue(d.v.Call("createTextNode", text))
 }
 
-func (d Doc) H(html string) Element {
+func (d *doc) H(html string) Element {
 	bufferString := bytes.NewBufferString(html)
 	n, err := d.Decode(xml.NewDecoder(bufferString))
 	if err != nil {
@@ -51,17 +70,9 @@ func (d Doc) H(html string) Element {
 	return n
 }
 
-func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
+func (d *doc) Decode(decoder *xml.Decoder) (Element, error) {
 	var parents []Element
 	charBuffer := &charDataBuffer{}
-
-	startNode := func(doc Doc, x xml.StartElement) Element {
-		var ga []*Attribute
-		for _, attr := range x.Attr {
-			ga = append(ga, &Attribute{Name: attr.Name.Local, Value: attr.Value})
-		}
-		return doc.El(x.Name.Local, ga...)
-	}
 
 	token, err := decoder.Token()
 	if err != nil {
@@ -72,7 +83,7 @@ func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
 		case xml.Directive:
 			// for now, we don't care about DOCTYPE, CDATA, etc.
 		case xml.StartElement:
-			parents = append(parents, startNode(d, x))
+			parents = append(parents, d.startNode(x))
 			if len(parents) > 1 {
 				d.AppendChild(parents[len(parents)-2], parents[len(parents)-1])
 			}
@@ -97,7 +108,15 @@ func (d Doc) Decode(decoder *xml.Decoder) (Element, error) {
 	return parents[0], nil
 }
 
-func (d Doc) AppendChild(parent, child Element) {
+func (d *doc) startNode(x xml.StartElement) Element {
+	var ga []*Attribute
+	for _, attr := range x.Attr {
+		ga = append(ga, &Attribute{Name: attr.Name.Local, Value: attr.Value})
+	}
+	return d.El(x.Name.Local, ga...)
+}
+
+func (d *doc) AppendChild(parent, child Element) {
 	parent.AppendChild(child)
 	child.SetParent(parent)
 }
@@ -113,3 +132,14 @@ func (cd *charDataBuffer) pop() string {
 }
 
 const IM = "implement me"
+
+/*
+
+ godom.Ser(callback).H("some html here") - returns element
+
+ d := godom.Ser(callback)
+ d.El("body").Body(nodes ...Node)
+
+
+
+*/

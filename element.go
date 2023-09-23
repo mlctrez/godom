@@ -16,6 +16,7 @@ type Element interface {
 	SetParent(parent Element)
 	Parent() Element
 	GetElementsByTagName(tag string) []Element
+	Body(nodes ...Node)
 }
 
 var _ Element = (*element)(nil)
@@ -24,6 +25,12 @@ type element struct {
 	node
 	attributes Attributes
 	parent     Element
+}
+
+func (e *element) Body(nodes ...Node) {
+	for _, n := range nodes {
+		e.AppendChild(n)
+	}
 }
 
 func (e *element) RemoveAttribute(name string) {

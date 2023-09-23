@@ -77,7 +77,7 @@ func (md *mockDocument) CreateTextNode(text string) Value {
 }
 
 func (md *mockDocument) Reset() {
-	documentElement := Doc{Doc: toValue(md)}.H("<html><head/><body/></html>")
+	documentElement := NewDocApi(toValue(md)).H("<html><head/><body/></html>")
 	md.Set("documentElement", documentElement.This())
 }
 

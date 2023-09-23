@@ -55,7 +55,6 @@ func TestDoc_FromDecoder(t *testing.T) {
 	if enc != "<html>data</html>" {
 		t.Fatal(enc)
 	}
-
 }
 
 func TestDoc_H(t *testing.T) {
@@ -104,10 +103,10 @@ func TestDoc_El_datago(t *testing.T) {
 	a := assert.New(t)
 	api := Document().DocApi()
 	var dataGoRef string
-	api.CallBack = func(e Element, name, value string) {
+	api = api.WithCallback(func(e Element, name, value string) {
 		a.Equal("div", e.NodeName())
 		dataGoRef = value
-	}
+	})
 	api.H(`<div data-go="data-go-value"/>`)
 	a.Equal("data-go-value", dataGoRef)
 }

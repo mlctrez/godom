@@ -6,16 +6,17 @@ import (
 )
 
 type Context struct {
-	Doc    godom.Doc
+	Doc    godom.DocApi
 	URL    *url.URL
 	Events chan Event
 }
 
 type ServerContext struct {
-	Main    string
-	Output  string
-	Address string
-	Watch   []string
+	Main         string
+	Output       string
+	Address      string
+	Watch        []string
+	ShowWasmSize bool
 }
 
 type Handler interface {

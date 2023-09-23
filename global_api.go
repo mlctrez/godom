@@ -17,15 +17,15 @@ type DocumentApi interface {
 	Head() Element
 	Body() Element
 	EventListener
-	DocApi() Doc
+	DocApi() DocApi
 }
 
 type document struct {
 	node
 }
 
-func (d *document) DocApi() Doc {
-	return Doc{Doc: d.This()}
+func (d *document) DocApi() DocApi {
+	return NewDocApi(d.this)
 }
 
 func (d *document) CreateElement(tag string) Element {

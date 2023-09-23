@@ -115,3 +115,12 @@ func TestElement_RemoveAttribute(t *testing.T) {
 	h.RemoveAttribute("id")
 	a.True(h.This().Call("getAttribute", "id").IsNull())
 }
+
+func TestElement_Body(t *testing.T) {
+	a := require.New(t)
+	doc := Document().DocApi()
+	h := doc.H(`<div id="testBody"/>`)
+	h.Body(doc.H(`<div id="bodyNode1"/>`), doc.H(`<div id="bodyNode2"/>`))
+	a.Equal(2, len(h.ChildNodes()))
+	a.Equal("bodyNode1", h.ChildNodes()[0].This().Call("getAttribute", "id").String())
+}

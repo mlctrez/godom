@@ -62,12 +62,15 @@ func TestGlobal_GetElementById(t *testing.T) {
 }
 
 func TestGlobal_AddEventListener(t *testing.T) {
-
 	dummyFunc()
 
 	doc := Document()
 	h := doc.DocApi().H(`<div/>`)
 	doc.Body().AppendChild(h)
-	// just to test that the method can be invoked
-	h.AddEventListener("click", func(event Value) {})()
+
+	cleanUp := h.AddEventListener("click", func(event Value) {})
+	// test that the remove method can be invoked on the non wasm path
+	cleanUp()
+
+	h.Remove()
 }
