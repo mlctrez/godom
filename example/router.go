@@ -66,6 +66,7 @@ func (e *router) index(ctx *app.Context) godom.Element {
 	body := doc.El("body")
 
 	body.AppendChild(navbar.Render(ctx))
+	// TODO: remove example one since it is not used
 	//body := doc.H("<body><table><tbody/></table></body>")
 	//body.GetElementsByTagName("tbody")[0].AppendChild((&exampleOne{}).render(ctx))
 	return body
