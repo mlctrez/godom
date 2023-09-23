@@ -16,7 +16,7 @@ type exampleOne struct {
 }
 
 var exOneRow = `<tr><td>
-<button go="button">example one</button><button go="reset">reset</button> 
+<button go="button" type="button">example one</button><button go="reset">reset</button> 
 <div go="div"></div>
 </td></tr>`
 
@@ -37,10 +37,12 @@ func (eo *exampleOne) callBack() func(e godom.Element, name string, data string)
 
 func (eo *exampleOne) events(doc godom.Doc) {
 	eo.Button.AddEventListener("click", func(event godom.Value) {
-		eo.Button.SetAttribute("disabled", true)
-		go time.AfterFunc(200*time.Millisecond, func() {
-			eo.Button.RemoveAttribute("disabled")
-		})
+		//eo.Button.SetAttribute("disabled", true)
+		//eo.Button.This().Set("innerHTML", "disabled")
+		//go time.AfterFunc(1*time.Second, func() {
+		//	eo.Button.RemoveAttribute("disabled")
+		//	eo.Button.This().Set("innerHTML", "example one")
+		//})
 		eo.Div.AppendChild(doc.El("br"))
 		eo.Div.AppendChild(doc.H(fmt.Sprintf("<span>%s</span>", time.Now().Format(time.RFC3339Nano))))
 		if len(eo.Div.ChildNodes()) > 12 {

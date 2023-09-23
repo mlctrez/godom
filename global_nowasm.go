@@ -101,11 +101,11 @@ func (m *mockElement) AppendChild(child Value) {
 
 var dummyFunc = func() {}
 
-func (m *mockElement) AddEventListener(eventType string, fn any) func() {
-	return dummyFunc
-}
+func (m *mockElement) AddEventListener(eventType string, fn any) func() { return dummyFunc }
 
 func (m *mockElement) RemoveEventListener(eventType string, fn any) {}
+
+func (m *mockElement) Remove() {}
 
 func global() Value {
 	globalThisMu.Lock()

@@ -2,6 +2,7 @@ package wsm
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -102,13 +103,17 @@ func (a *App) onClick(this godom.Value, args []godom.Value) any {
 		return nil
 	}
 	if nodeName.String() == "A" {
-		event.Call("preventDefault")
 		href := target.Get("href").String()
+		if href == "" {
+			return nil
+		}
+		event.Call("preventDefault")
 		u, err := url.Parse(href)
 		if err != nil {
 			a.Window.Get("console").Call("error", "target.href", err)
 			return nil
 		}
+		fmt.Println("click A", href, u.String())
 		wu, _ := url.Parse(a.Window.Get("location").Get("href").String())
 		if u.Host != wu.Host {
 			a.events <- &app.Location{URL: u, External: true}

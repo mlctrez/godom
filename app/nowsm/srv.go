@@ -35,7 +35,7 @@ func Run(h app.Handler) {
 		os.Exit(1)
 	}
 
-	s := &Server{h: h, sc: sc, pubSub: pubsub.New(10), clientNumber: 1}
+	s := &Server{h: h, sc: sc, pubSub: pubsub.New(10), clientNumber: 0}
 
 	var w *watcher.Watcher
 	if w, err = watcher.New(s.fileChange, sc.Watch...); err != nil {
@@ -127,12 +127,15 @@ func (s *Server) defaultRoute(writer http.ResponseWriter, request *http.Request)
 	doc := document.DocApi()
 
 	html := doc.El("html", doc.At("lang", "en"))
-	head := doc.H(`<head><meta charset="UTF-8"/><title>TODO</title>
+	head := doc.H(`<head>
+	<meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>TODO</title>
     <script type="application/javascript" src="app.js"></script>
 </head>`)
 	ctx := &app.Context{Doc: doc, URL: request.URL, Events: nil}
-	s.h.Headers(ctx, head)
 	html.AppendChild(head)
+	s.h.Headers(ctx, head)
 	html.AppendChild(s.h.Body(ctx))
 	buf := &bytes.Buffer{}
 	enc := godom.NewEncoder(buf)
