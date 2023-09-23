@@ -5,5 +5,4 @@ build/
 *.log
 *.sh
 *.md
-*.html
 *.js
