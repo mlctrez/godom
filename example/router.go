@@ -1,10 +1,12 @@
 package example
 
 import (
+	_ "embed"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
 	"github.com/mlctrez/godom/example/demos"
 	"github.com/mlctrez/godom/example/navbar"
+	"strings"
 )
 
 var _ app.Handler = (*router)(nil)
@@ -22,69 +24,41 @@ func (e *router) Prepare(ctx *app.ServerContext) {
 	ctx.Address = ":8080"
 }
 
+//go:embed head.html
+var headHtml string
+
 func (e *router) Headers(ctx *app.Context, header godom.Element) {
 	if header.Parent() != nil {
 		header.Parent().SetAttribute("data-bs-theme", "dark")
 	}
 	for i, node := range header.ChildNodes() {
 		if node.NodeName() == "title" {
-			// TODO: should be able to call ReplaceWith
+			// TODO: simplify this
 			oldTitle := header.ChildNodes()[i]
 			header.ChildNodes()[i] = ctx.Doc.H("<title>godom</title>")
 			oldTitle.(godom.Element).Remove()
 		}
 	}
 	if len(header.GetElementsByTagName("link")) == 0 {
-		header.AppendChild(ctx.Doc.H(bootstrapCss))
-		header.AppendChild(ctx.Doc.H(bootstrapJs))
+		header.Body(ctx.Doc.H(headHtml).ChildNodes()...)
 	}
 }
-
-var bootstrapCss = `<link 
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
-rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
-crossorigin="anonymous"/>`
-
-var bootstrapJs = `<script 
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
-integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
-crossorigin="anonymous"></script>`
 
 func (e *router) Body(ctx *app.Context) godom.Element {
+	d := ctx.Doc
+
+	body := d.El("body").Body(navbar.Render(ctx))
 	switch ctx.URL.Path {
 	case "/":
-		return e.index(ctx)
+		return body
 	case "/exampleOne":
-		doc := ctx.Doc
-		body := doc.El("body")
-		body.AppendChild(navbar.Render(ctx))
-		body.AppendChild(demos.ExampleOne(ctx))
-		return body
-
+		return body.Body(demos.ExampleOne(ctx))
 	case "/editor":
-		doc := ctx.Doc
-		body := doc.El("body")
-		body.AppendChild(navbar.Render(ctx))
-		body.AppendChild(demos.Editor(ctx))
-		return body
+		return body.Body(demos.Editor(ctx))
 	default:
-		return e.notFound(ctx)
+		return body.Body(d.H(strings.Replace(was404, "@@page@@", ctx.URL.String(), 1)))
 	}
 }
 
-func (e *router) index(ctx *app.Context) godom.Element {
-	doc := ctx.Doc
-	body := doc.El("body")
-	body.AppendChild(navbar.Render(ctx))
-	return body
-}
-
-func (e *router) notFound(ctx *app.Context) godom.Element {
-	return ctx.Doc.H(pageNotFound)
-}
-
-var pageNotFound = `<body>
-<p style="color:red">page not found</p>
-<br/>
-Go back to <a href="/">index page</a>
-</body>`
+//go:embed 404.html
+var was404 string
