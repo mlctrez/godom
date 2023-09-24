@@ -1,6 +1,7 @@
 package demos
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
@@ -36,14 +37,5 @@ func ExampleOne(ctx *app.Context) godom.Element {
 	return row
 }
 
-var exOneHtml = `
-<div class="container-fluid">
-  <div class="row justify-content-md-center">
-    <div class="col col-lg-2">
-		<button go="button" type="button" class="btn btn-primary">example one</button>
-		<button go="reset" type="button" class="btn btn-warning">reset</button>
-	</div>
-	<div class="col-sm" go="div"></div>
-  </div>
-</div>
-`
+//go:embed one.html
+var exOneHtml string

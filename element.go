@@ -104,7 +104,11 @@ func (e *element) Marshal(enc Encoder) Encoder {
 }
 
 func (e *element) isAlwaysClose() bool {
-	return e.nodeName == "script"
+	switch e.nodeName {
+	case "script", "textarea":
+		return true
+	}
+	return false
 }
 
 func (e *element) String() string {

@@ -8,7 +8,7 @@ import (
 type PeriodicFunc func() (ok bool)
 
 // Periodic executes a PeriodicFunc every interval.
-// It will return if context is cancelled or PeriodicFunc returns false.
+// It will return if ctx is cancelled or PeriodicFunc returns false.
 // It is intended to be run as a go routine.
 //
 //	go Periodic(ctx, time.Second, func() bool {

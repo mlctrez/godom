@@ -78,6 +78,6 @@ var navItems = []struct {
 	Path string
 }{
 	{Name: "Home", Path: "/"},
-	{Name: "Page", Path: "/page"},
-	{Name: "404", Path: "/404"},
+	{Name: "Example One", Path: "/exampleOne"},
+	{Name: "Editor", Path: "/editor"},
 }

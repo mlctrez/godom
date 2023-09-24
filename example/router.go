@@ -54,23 +54,28 @@ func (e *router) Body(ctx *app.Context) godom.Element {
 	switch ctx.URL.Path {
 	case "/":
 		return e.index(ctx)
-	case "/page":
-		return e.index(ctx)
+	case "/exampleOne":
+		doc := ctx.Doc
+		body := doc.El("body")
+		body.AppendChild(navbar.Render(ctx))
+		body.AppendChild(demos.ExampleOne(ctx))
+		return body
+
+	case "/editor":
+		doc := ctx.Doc
+		body := doc.El("body")
+		body.AppendChild(navbar.Render(ctx))
+		body.AppendChild(demos.Editor(ctx))
+		return body
 	default:
 		return e.notFound(ctx)
 	}
 }
 
 func (e *router) index(ctx *app.Context) godom.Element {
-
 	doc := ctx.Doc
 	body := doc.El("body")
-
 	body.AppendChild(navbar.Render(ctx))
-	if ctx.URL.Path == "/" {
-		body.AppendChild(doc.H("<br/>"))
-		body.AppendChild(demos.ExampleOne(ctx))
-	}
 	return body
 }
 

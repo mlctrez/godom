@@ -124,3 +124,11 @@ func TestElement_Body(t *testing.T) {
 	a.Equal(2, len(h.ChildNodes()))
 	a.Equal("bodyNode1", h.ChildNodes()[0].This().Call("getAttribute", "id").String())
 }
+
+func TestElement_isAlwaysClose(t *testing.T) {
+	a := require.New(t)
+	api := Document().DocApi()
+	a.True(api.El("script").(*element).isAlwaysClose())
+	a.True(api.El("textarea").(*element).isAlwaysClose())
+	a.False(api.El("div").(*element).isAlwaysClose())
+}
