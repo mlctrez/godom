@@ -43,8 +43,20 @@ func (e *element) ReplaceWith(n Node) {
 }
 
 func (e *element) SetAttribute(name string, value interface{}) {
-	e.attributes = append(e.attributes, &Attribute{Name: name, Value: value})
 	e.this.Call("setAttribute", name, value)
+	found := false
+	for _, attribute := range e.attributes {
+		if attribute.Name == name {
+
+			attribute.Value = value
+			found = true
+			break
+		}
+	}
+	if !found {
+		e.attributes = append(e.attributes, &Attribute{Name: name, Value: value})
+	}
+
 	e.attributes.SortByName()
 }
 

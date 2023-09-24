@@ -40,10 +40,18 @@ func (d *doc) WithCallback(cb OnElement) DocApi {
 // El creates a new element with optional attributes.
 func (d *doc) El(tag string, attributes ...*Attribute) Element {
 	c := ElementFromValue(d.v.Call("createElement", tag))
+	var nv [][]string
 	for _, a := range attributes {
 		c.SetAttribute(a.Name, a.Value)
 		if d.cb != nil && dataGoRegex.MatchString(a.Name) {
-			d.cb(c, strings.TrimPrefix(a.Name, "data-"), a.Value.(string))
+			name := strings.TrimPrefix(a.Name, "data-")
+			// use later after all attributes have been set
+			nv = append(nv, []string{name, a.Value.(string)})
+		}
+	}
+	if d.cb != nil {
+		for _, nameValue := range nv {
+			d.cb(c, nameValue[0], nameValue[1])
 		}
 	}
 	return c

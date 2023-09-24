@@ -2,7 +2,6 @@ package wsm
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"time"
 
@@ -113,7 +112,7 @@ func (a *App) onClick(this godom.Value, args []godom.Value) any {
 			a.Window.Get("console").Call("error", "target.href", err)
 			return nil
 		}
-		fmt.Println("click A", href, u.String())
+		//fmt.Println("click A", href, u.String())
 		wu, _ := url.Parse(a.Window.Get("location").Get("href").String())
 		if u.Host != wu.Host {
 			a.events <- &app.Location{URL: u, External: true}

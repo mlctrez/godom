@@ -105,8 +105,13 @@ func TestDoc_El_datago(t *testing.T) {
 	var dataGoRef string
 	api = api.WithCallback(func(e Element, name, value string) {
 		a.Equal("div", e.NodeName())
+		e.SetAttribute("other", "new")
 		dataGoRef = value
 	})
-	api.H(`<div data-go="data-go-value"/>`)
+	h := api.H(`<div data-go="data-go-value" other="old"/>`)
 	a.Equal("data-go-value", dataGoRef)
+
+	// callback should have replaced the other attribute with new
+	// don't currently have getAttribute so just use string
+	a.Equal(`<div data-go="data-go-value" other="new"/>`, h.String())
 }
