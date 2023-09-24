@@ -115,3 +115,14 @@ func TestDoc_El_datago(t *testing.T) {
 	// don't currently have getAttribute so just use string
 	a.Equal(`<div data-go="data-go-value" other="new"/>`, h.String())
 }
+
+func Test_dataGoRegex(t *testing.T) {
+	a := require.New(t)
+	r := dataGoRegex
+	a.False(r.MatchString(""))
+	a.False(r.MatchString("foo"))
+	a.True(r.MatchString("data-go"))
+	a.True(r.MatchString("data-go-extra"))
+	a.True(r.MatchString("go"))
+	a.True(r.MatchString("go-extra"))
+}

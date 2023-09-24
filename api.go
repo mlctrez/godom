@@ -23,22 +23,22 @@ type DocApi interface {
 }
 
 func NewDocApi(v Value) DocApi {
-	return &doc{v: v}
+	return &docApi{v: v}
 }
 
-type doc struct {
+type docApi struct {
 	v  Value
 	cb OnElement
 }
 
-var dataGoRegex = regexp.MustCompile("^data-go.*?|go.*?")
+var dataGoRegex = regexp.MustCompile("^go.*?$|^data-go.*?$")
 
-func (d *doc) WithCallback(cb OnElement) DocApi {
-	return &doc{v: d.v, cb: cb}
+func (d *docApi) WithCallback(cb OnElement) DocApi {
+	return &docApi{v: d.v, cb: cb}
 }
 
 // El creates a new element with optional attributes.
-func (d *doc) El(tag string, attributes ...*Attribute) Element {
+func (d *docApi) El(tag string, attributes ...*Attribute) Element {
 	c := ElementFromValue(d.v.Call("createElement", tag))
 	var nv [][]string
 	for _, a := range attributes {
@@ -58,16 +58,16 @@ func (d *doc) El(tag string, attributes ...*Attribute) Element {
 }
 
 // At creates a new attribute.
-func (d *doc) At(name string, value interface{}) *Attribute {
+func (d *docApi) At(name string, value interface{}) *Attribute {
 	return &Attribute{Name: name, Value: value}
 }
 
 // T creates a new text with optional attributes.
-func (d *doc) T(text string) Text {
+func (d *docApi) T(text string) Text {
 	return TextFromValue(d.v.Call("createTextNode", text))
 }
 
-func (d *doc) H(html string) Element {
+func (d *docApi) H(html string) Element {
 	bufferString := bytes.NewBufferString(html)
 	n, err := d.Decode(xml.NewDecoder(bufferString))
 	if err != nil {
@@ -78,7 +78,7 @@ func (d *doc) H(html string) Element {
 	return n
 }
 
-func (d *doc) Decode(decoder *xml.Decoder) (Element, error) {
+func (d *docApi) Decode(decoder *xml.Decoder) (Element, error) {
 	var parents []Element
 	charBuffer := &charDataBuffer{}
 
@@ -116,7 +116,7 @@ func (d *doc) Decode(decoder *xml.Decoder) (Element, error) {
 	return parents[0], nil
 }
 
-func (d *doc) startNode(x xml.StartElement) Element {
+func (d *docApi) startNode(x xml.StartElement) Element {
 	var ga []*Attribute
 	for _, attr := range x.Attr {
 		ga = append(ga, &Attribute{Name: attr.Name.Local, Value: attr.Value})
@@ -124,7 +124,7 @@ func (d *doc) startNode(x xml.StartElement) Element {
 	return d.El(x.Name.Local, ga...)
 }
 
-func (d *doc) AppendChild(parent, child Element) {
+func (d *docApi) AppendChild(parent, child Element) {
 	parent.AppendChild(child)
 	child.SetParent(parent)
 }
