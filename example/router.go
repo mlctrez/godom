@@ -53,6 +53,8 @@ func (e *router) Body(ctx *app.Context) godom.Element {
 		return body
 	case "/exampleOne":
 		return body.Body(demos.ExampleOne(ctx))
+	case "/diff":
+		return body.Body(demos.Diff(ctx))
 	case "/editor":
 		return body.Body(demos.Editor(ctx))
 	default:

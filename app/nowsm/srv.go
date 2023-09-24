@@ -131,6 +131,14 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		s.Wasm(writer, request)
 	case "/ws":
 		s.Echo(writer, request)
+	case "/git/diff":
+		cmd := exec.Command("git", "diff")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_, _ = writer.Write(output)
 	default:
 		s.defaultRoute(writer, request)
 	}
