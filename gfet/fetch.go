@@ -196,7 +196,7 @@ func (r *Request) Fetch() (res *Response, err error) {
 	}
 
 	fetchApi := godom.Global().Get("fetch")
-	godom.Console().Log("fetch", r.URL, opts)
+	//godom.Console().Log("fetch", r.URL, opts)
 	go fetchApi.Invoke(r.URL, opts).
 		Call("then", f.funcOf(f.fulfilled)).
 		Call("catch", f.funcOf(f.rejected))
