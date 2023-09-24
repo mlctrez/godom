@@ -5,13 +5,8 @@ import (
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
 	"github.com/mlctrez/godom/callback"
-	"os"
 	"time"
 )
-
-func ExampleOne(ctx *app.Context) godom.Element {
-	return (&exampleOne{}).render(ctx)
-}
 
 type exampleOne struct {
 	Button godom.Element `go:"button"`
@@ -19,27 +14,10 @@ type exampleOne struct {
 	Div    godom.Element `go:"div"`
 }
 
-var exOneRow = `<tr><td>
-<button go="button" type="button">example one</button><button go="reset">reset</button> 
-<div go="div"></div>
-</td></tr>`
-
-func (eo *exampleOne) callBack() func(e godom.Element, name string, data string) {
-	// callBack() can use one or the other
-	if os.Getenv("NO_REFLECTION") != "" {
-		// with tags and reflect
-		return callback.Reflect(eo)
-	} else {
-		// without tags or reflection
-		return callback.Mapper(map[string]func(godom.Element){
-			"button": func(ei godom.Element) { eo.Button = ei },
-			"reset":  func(ei godom.Element) { eo.Reset = ei },
-			"div":    func(ei godom.Element) { eo.Div = ei },
-		})
-	}
-}
-
-func (eo *exampleOne) events(doc godom.DocApi) {
+func ExampleOne(ctx *app.Context) godom.Element {
+	eo := &exampleOne{}
+	doc := ctx.Doc.WithCallback(callback.Reflect(eo))
+	row := doc.H(exOneHtml)
 	eo.Button.AddEventListener("click", func(event godom.Value) {
 
 		span := fmt.Sprintf("<span>%s</span>", time.Now().Format(time.RFC3339Nano))
@@ -55,11 +33,17 @@ func (eo *exampleOne) events(doc godom.DocApi) {
 			eo.Div.RemoveChild(eo.Div.ChildNodes()[0].This())
 		}
 	})
-}
-
-func (eo *exampleOne) render(ctx *app.Context) godom.Element {
-	doc := ctx.Doc.WithCallback(eo.callBack())
-	row := doc.H(exOneRow)
-	eo.events(doc)
 	return row
 }
+
+var exOneHtml = `
+<div class="container-fluid">
+  <div class="row justify-content-md-center">
+    <div class="col col-lg-2">
+		<button go="button" type="button" class="btn btn-primary">example one</button>
+		<button go="reset" type="button" class="btn btn-warning">reset</button>
+	</div>
+	<div class="col-sm" go="div"></div>
+  </div>
+</div>
+`
