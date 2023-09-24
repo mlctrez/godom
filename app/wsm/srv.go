@@ -3,6 +3,7 @@ package wsm
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/mlctrez/godom"
@@ -22,11 +23,15 @@ func Run(h app.Handler) {
 	a.Document = godom.Document()
 	a.lastBody = a.Document.Body()
 
-	// TODO: add ability to turn this on and off
-	go a.KeepAlive()
+	href := a.Window.Get("location").Get("href").String()
+
+	devReloadEnabled := strings.Contains(href, "localhost")
+	if devReloadEnabled {
+		go a.KeepAlive()
+	}
 
 	release := a.eventHandlers()
-	u, err := url.Parse(a.Window.Get("location").Get("href").String())
+	u, err := url.Parse(href)
 	if err != nil {
 		a.Window.Get("console").Call("error", "location.href parse error", err.Error())
 		u = &url.URL{Path: "/"}
@@ -53,7 +58,9 @@ func Run(h app.Handler) {
 			}
 		case <-a.ctx.Done():
 			release()
-			a.tryReconnect()
+			if devReloadEnabled {
+				a.tryReconnect()
+			}
 			return
 		}
 	}
