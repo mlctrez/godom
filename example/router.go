@@ -22,6 +22,7 @@ func (e *router) Prepare(ctx *app.ServerContext) {
 	ctx.Output = "build/app.wasm"
 	ctx.Watch = []string{"example", "app"}
 	ctx.Address = ":8080"
+	ctx.ShowWasmSize = true
 }
 
 //go:embed head.html
@@ -60,6 +61,16 @@ func (e *router) Body(ctx *app.Context) godom.Element {
 	default:
 		return body.Body(d.H(strings.Replace(was404, "@@page@@", ctx.URL.String(), 1)))
 	}
+}
+
+func (e *router) Serve(request app.Request, response app.Response) bool {
+
+	switch request.URL().Path {
+	case "/diff/api":
+		demos.DiffServe(request, response)
+		return true
+	}
+	return false
 }
 
 //go:embed 404.html

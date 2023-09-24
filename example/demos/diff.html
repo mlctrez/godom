@@ -1,7 +1,21 @@
 <div id="diff" style="padding-top: 1em">
     <div class="container-fluid">
         <div class="row">
-            <div class="col" data-go="diff"></div>
+            <div class="col">
+                <p>
+                    An example that interacts with the backend.
+                    The show button performs a GET request to /diff/api for git diff output.
+                    The commit button performs a POST to with /diff/api with the commit message.
+                </p>
+                <form class="d-flex mb-2 mb-lg-0">
+                    <button data-go="showDiff" type="button" class="btn btn-primary">show</button>
+                    <input value="updates" class="form-control" type="text" data-go="commitMessage"/>
+                    <button data-go="commit" type="button" class="btn btn-warning">commit</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col" data-go="diff" style="padding-top: 1em"></div>
         </div>
     </div>
 </div>

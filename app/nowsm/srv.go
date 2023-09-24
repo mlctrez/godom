@@ -119,10 +119,13 @@ type Server struct {
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
-	// TODO: revisit if api.Handler should be able to override these
-	//   or provide additional endpoints
+	path := request.URL.Path
 
-	switch request.URL.Path {
+	if s.h.Serve(&req{r: request}, &res{w: writer}) {
+		return
+	}
+
+	switch path {
 	case "/app.js":
 		AppJs(writer, request)
 	case "/favicon.ico":
@@ -131,14 +134,6 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		s.Wasm(writer, request)
 	case "/ws":
 		s.Echo(writer, request)
-	case "/git/diff":
-		cmd := exec.Command("git", "diff")
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		_, _ = writer.Write(output)
 	default:
 		s.defaultRoute(writer, request)
 	}
