@@ -99,6 +99,17 @@ func (m *mockElement) AppendChild(child Value) {
 	m.children = append(m.children, child)
 }
 
+func (m *mockElement) RemoveChild(child Value) {
+	var updated []Value
+	for _, otherChild := range m.children {
+		if otherChild.Equal(child) {
+			continue
+		}
+		updated = append(updated, otherChild)
+	}
+	m.children = updated
+}
+
 var dummyFunc = func() {}
 
 func (m *mockElement) AddEventListener(eventType string, fn any) func() { return dummyFunc }

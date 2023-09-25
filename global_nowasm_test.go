@@ -74,3 +74,14 @@ func TestGlobal_AddEventListener(t *testing.T) {
 
 	h.Remove()
 }
+
+func TestMockElement_RemoveChild(t *testing.T) {
+	a := require.New(t)
+	a.NotNil(a)
+
+	api := NewDocApi(Document().This())
+
+	div := api.H(`<div><p id="removeMe"/><p id="leaveMe"/></div>`)
+	div.RemoveChild(div.ChildNodes()[0].This())
+	a.Equal(1, len(div.ChildNodes()))
+}

@@ -91,13 +91,19 @@ func (d *docApi) Decode(decoder *xml.Decoder) (Element, error) {
 		case xml.Directive:
 			// for now, we don't care about DOCTYPE, CDATA, etc.
 		case xml.StartElement:
+
+			textData := charBuffer.pop()
+			if len(textData) > 0 && len(parents) > 0 {
+				parents[len(parents)-1].AppendChild(d.T(textData))
+			}
+
 			parents = append(parents, d.startNode(x))
 			if len(parents) > 1 {
 				d.AppendChild(parents[len(parents)-2], parents[len(parents)-1])
 			}
 		case xml.EndElement:
-			textData := strings.TrimSpace(charBuffer.pop())
-			if len(textData) > 0 {
+			textData := charBuffer.pop()
+			if len(textData) > 0 && len(parents) > 0 {
 				parents[len(parents)-1].AppendChild(d.T(textData))
 			}
 			if len(parents) > 1 {
@@ -140,14 +146,3 @@ func (cd *charDataBuffer) pop() string {
 }
 
 const IM = "implement me"
-
-/*
-
- godom.Ser(callback).H("some html here") - returns element
-
- d := godom.Ser(callback)
- d.El("body").Body(nodes ...Node)
-
-
-
-*/

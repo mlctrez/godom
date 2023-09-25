@@ -2,6 +2,7 @@ package wsm
 
 import (
 	"context"
+	"github.com/mlctrez/godom/callback"
 	"net/url"
 	"strings"
 	"time"
@@ -20,8 +21,6 @@ func Run(h app.Handler) {
 	a.events = make(chan app.Event, 100)
 	a.Global = godom.Global()
 	a.Window = a.Global.Get("window")
-	a.Document = godom.Document()
-	a.lastBody = a.Document.Body()
 
 	href := a.Window.Get("location").Get("href").String()
 
@@ -37,9 +36,13 @@ func Run(h app.Handler) {
 		u = &url.URL{Path: "/"}
 	}
 
-	a.h.Headers(&app.Context{Doc: a.Document.DocApi(), URL: u}, a.Document.Head())
+	a.Document = godom.Document()
+	a.lastBody = a.Document.Body()
 
-	a.events <- &app.Location{URL: u}
+	// TODO: need a way to re-bind elements already in the dom
+	callback.Reflect(a.h)(a.Document.DocumentElement(), "go", "html")
+
+	a.events <- &app.Location{URL: u, PopState: true}
 	for {
 		select {
 		case value := <-a.events:
@@ -49,7 +52,9 @@ func Run(h app.Handler) {
 					a.Window.Get("history").Call("pushState", nil, "", v.URL.String())
 				}
 				if !v.External {
-					newBody := a.h.Body(&app.Context{Doc: a.Document.DocApi(), URL: v.URL, Events: a.events})
+					api := a.Document.DocApi().WithCallback(callback.Reflect(a.h))
+					bCtx := &app.Context{Doc: api, URL: v.URL, Events: a.events}
+					newBody := a.h.Body(bCtx)
 					a.lastBody.ReplaceWith(newBody)
 					a.lastBody = newBody
 				} else {

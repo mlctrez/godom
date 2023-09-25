@@ -126,3 +126,12 @@ func Test_dataGoRegex(t *testing.T) {
 	a.True(r.MatchString("go"))
 	a.True(r.MatchString("go-extra"))
 }
+
+func Test_nested_with_text(t *testing.T) {
+	a := require.New(t)
+	doc := Document().DocApi()
+	a.Equal(
+		"<p>some text <code>markup</code> other text</p>",
+		doc.H("<p>some text <code>markup</code> other text</p>").String(),
+	)
+}

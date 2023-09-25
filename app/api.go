@@ -27,8 +27,8 @@ type ServerContext struct {
 
 type Handler interface {
 	Prepare(ctx *ServerContext)
-	Headers(ctx *Context, header godom.Element)
-	Body(ctx *Context) godom.Element
+	Html(ctx *Context)
+	Body(ctx *Context) (body godom.Element)
 
 	Serve(request Request, response Response) bool
 }
