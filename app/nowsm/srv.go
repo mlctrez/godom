@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/mlctrez/godom/callback"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +17,8 @@ import (
 	"github.com/cskr/pubsub"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
+	"github.com/mlctrez/godom/callback"
+	"github.com/mlctrez/godom/gdutil"
 	"github.com/mlctrez/godom/watcher"
 	"github.com/mlctrez/wasmexec"
 	"github.com/rjeczalik/notify"
@@ -116,16 +117,19 @@ type Server struct {
 	clientNumber int
 	pubSub       *pubsub.PubSub
 	sc           *app.ServerContext
+	prefix       string
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
-	path := request.URL.Path
+	s.prefix = gdutil.GetPrefix(request.URL)
+	request.URL.Path = strings.TrimPrefix(request.URL.Path, s.prefix)
 
 	if s.h.Serve(&req{r: request}, &res{w: writer}) {
 		return
 	}
 
+	path := request.URL.Path
 	switch path {
 	case "/app.js":
 		AppJs(writer, request)

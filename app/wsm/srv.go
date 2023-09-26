@@ -2,13 +2,13 @@ package wsm
 
 import (
 	"context"
-	"github.com/mlctrez/godom/callback"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/app"
+	"github.com/mlctrez/godom/callback"
 	"github.com/mlctrez/godom/gdutil"
 	"github.com/mlctrez/godom/gfet"
 	"github.com/mlctrez/godom/gws"
@@ -30,6 +30,7 @@ func Run(h app.Handler) {
 	}
 
 	release := a.eventHandlers()
+
 	u, err := url.Parse(href)
 	if err != nil {
 		a.Window.Get("console").Call("error", "location.href parse error", err.Error())
@@ -42,6 +43,8 @@ func Run(h app.Handler) {
 	// TODO: need a way to re-bind elements already in the dom
 	callback.Reflect(a.h)(a.Document.DocumentElement(), "go", "html")
 
+	a.prefix = gdutil.GetPrefix(u)
+	u.Path = strings.TrimPrefix(u.Path, a.prefix)
 	a.events <- &app.Location{URL: u, PopState: true}
 	for {
 		select {
@@ -49,7 +52,7 @@ func Run(h app.Handler) {
 			switch v := value.(type) {
 			case *app.Location:
 				if !v.External && !v.PopState {
-					a.Window.Get("history").Call("pushState", nil, "", v.URL.String())
+					a.Window.Get("history").Call("pushState", nil, "", a.prefixUrl(v.URL))
 				}
 				if !v.External {
 					api := a.Document.DocApi().WithCallback(callback.Reflect(a.h))
@@ -81,6 +84,7 @@ type App struct {
 	events    chan app.Event
 	ws        gws.WebSocket
 	lastBody  godom.Element
+	prefix    string
 }
 
 func (a *App) eventHandlers() func() {
@@ -99,6 +103,17 @@ func (a *App) eventHandlers() func() {
 			fn.Release()
 		}
 	}
+}
+
+func (a *App) prefixUrl(u *url.URL) string {
+	if a.prefix != "" {
+		return u.String()
+	}
+	// avoid modifying original
+	withPrefix := &url.URL{}
+	*withPrefix = *u
+	withPrefix.Path = a.prefix + withPrefix.Path
+	return withPrefix.String()
 }
 
 func (a *App) onClick(this godom.Value, args []godom.Value) any {
