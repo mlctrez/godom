@@ -106,7 +106,7 @@ func (a *App) eventHandlers() func() {
 }
 
 func (a *App) prefixUrl(u *url.URL) string {
-	if a.prefix != "" {
+	if a.prefix == "" {
 		return u.String()
 	}
 	// avoid modifying original
