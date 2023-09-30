@@ -82,6 +82,8 @@ func (d *docApi) Decode(decoder *xml.Decoder) (Element, error) {
 	var parents []Element
 	charBuffer := &charDataBuffer{}
 
+	var lastDirective []byte
+
 	token, err := decoder.Token()
 	if err != nil {
 		return nil, fmt.Errorf("EOF first token")
@@ -89,7 +91,7 @@ func (d *docApi) Decode(decoder *xml.Decoder) (Element, error) {
 	for ; err == nil; token, err = decoder.Token() {
 		switch x := token.(type) {
 		case xml.Directive:
-			// for now, we don't care about DOCTYPE, CDATA, etc.
+			lastDirective = x.Copy()
 		case xml.StartElement:
 
 			textData := charBuffer.pop()
@@ -97,7 +99,12 @@ func (d *docApi) Decode(decoder *xml.Decoder) (Element, error) {
 				parents[len(parents)-1].AppendChild(d.T(textData))
 			}
 
-			parents = append(parents, d.startNode(x))
+			startNode := d.startNode(x)
+			if lastDirective != nil {
+				startNode.withDirective(lastDirective)
+				lastDirective = nil
+			}
+			parents = append(parents, startNode)
 			if len(parents) > 1 {
 				d.AppendChild(parents[len(parents)-2], parents[len(parents)-1])
 			}

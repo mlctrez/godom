@@ -17,6 +17,7 @@ type Element interface {
 	Parent() Element
 	GetElementsByTagName(tag string) []Element
 	Body(nodes ...Node) Element
+	withDirective(directive []byte)
 }
 
 var _ Element = (*element)(nil)
@@ -25,6 +26,11 @@ type element struct {
 	node
 	attributes Attributes
 	parent     Element
+	directive  []byte
+}
+
+func (e *element) withDirective(d []byte) {
+	e.directive = d
 }
 
 func (e *element) Body(nodes ...Node) Element {
@@ -95,6 +101,9 @@ func (e *element) Remove() {
 }
 
 func (e *element) Marshal(enc Encoder) Encoder {
+	if e.directive != nil {
+		enc.Directive(e.directive)
+	}
 	enc.Start(e.nodeName)
 	enc.Attributes(e.attributes)
 	for _, child := range e.children {

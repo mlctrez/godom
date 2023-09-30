@@ -6,6 +6,7 @@ import (
 )
 
 type Encoder interface {
+	Directive(data []byte)
 	Start(name string)
 	Attributes(a []*Attribute)
 	Text(data string)
@@ -32,6 +33,7 @@ type encoder struct {
 	indentAmount string
 }
 
+type xmlDirective struct{ d []byte }
 type xmlStart struct{ n string }
 type xmlAttr struct{ a []*Attribute }
 type xmlText struct{ d string }
@@ -41,6 +43,8 @@ type xmlEnd struct {
 }
 
 func (x *encoder) token(t interface{}) { x.tokens = append(x.tokens, t) }
+
+func (x *encoder) Directive(data []byte) { x.token(&xmlDirective{d: data}) }
 
 func (x *encoder) Start(name string) { x.token(&xmlStart{n: name}) }
 
@@ -88,6 +92,10 @@ func (x *encoder) Flush() {
 	indent := -1
 	for i, token := range x.tokens {
 		switch t := token.(type) {
+		case *xmlDirective:
+			x.buf.Write([]byte("<!"))
+			x.buf.Write(t.d)
+			x.buf.Write([]byte(">"))
 		case *xmlStart:
 			if x.shouldClose(i) {
 				x.buf.WriteString(">")

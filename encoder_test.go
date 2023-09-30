@@ -85,3 +85,10 @@ func TestEncoder_shouldClose(t *testing.T) {
 	a.Equal("<script></script>", api.El("script").String())
 
 }
+
+func TestEncoder_directive(t *testing.T) {
+	a := assert.New(t)
+	api := Document().DocApi()
+	d := api.H("<!DOCTYPE html><html/>")
+	a.Equal("<!DOCTYPE html><html/>", d.String())
+}
