@@ -3,26 +3,24 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/mlctrez/cmdrunner"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/nap"
-	"log"
+	"github.com/mlctrez/godom/nap/runner/build"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
 
 func Run(c *nap.Config) (err error) {
 	s := &server{o: c}
-	if s.build() {
-		return
+
+	if build.ArgsMatch() {
+		return build.Run(c)
 	}
+
 	if c.HandleSignals {
 		s.ctx, s.cancel = signal.NotifyContext(s.o.Context, os.Interrupt, os.Kill)
 	} else {
@@ -115,102 +113,4 @@ func (s *server) stopHttp() (err error) {
 		os.Exit(-1)
 	}
 	return nil
-}
-
-func (s *server) build() bool {
-	if len(os.Args) < 2 || os.Args[1] != "build" {
-		return false
-	}
-	s.o.Logger.Info("building static content")
-	if s.o.BuildOutput == "" {
-		log.Fatal("BuildOutput must be set correctly")
-	}
-
-	err := os.MkdirAll(s.o.BuildOutput, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, r := range s.o.Resources {
-		out := strings.TrimPrefix(strings.Trim(r.Regexp.String(), "^$"), "/")
-		if strings.HasSuffix(out, ".wasm") {
-			var mainFile string
-			if mainFile, err = findMain(); err != nil {
-				log.Fatal(err)
-			}
-			wasmFile := filepath.Join(s.o.BuildOutput, out)
-			if err = os.RemoveAll(wasmFile); err != nil {
-				log.Fatal(err)
-			}
-			command := exec.Command("go", "build", "-o", wasmFile, mainFile)
-			command.Env = append(os.Environ(), "GOOS=js", "GOARCH=wasm")
-			runner := cmdrunner.NewCmdRunner(command)
-			err = runner.Start(func(out *cmdrunner.CmdOutput) {
-				if out.Channel == cmdrunner.CmdStderr {
-					s.o.Logger.Error(out.Text)
-				} else {
-					s.o.Logger.Info(out.Text)
-				}
-			})
-			if err != nil {
-				log.Fatal("build failed", err)
-			}
-			if runner.WaitExit() != 0 {
-				log.Fatal("build failed, check log output above")
-			}
-			stat, err := os.Stat(wasmFile)
-			if err != nil {
-				log.Fatal(err)
-			}
-			s.o.Logger.Info(out, "size", stat.Size(), "created", stat.ModTime().Format(time.RFC3339))
-			continue
-		}
-		finalPath := filepath.Join(s.o.BuildOutput, out)
-		if err = os.MkdirAll(filepath.Dir(finalPath), 0755); err != nil {
-			log.Fatal(err)
-		}
-		var create *os.File
-		if create, err = os.Create(filepath.Join(s.o.BuildOutput, out)); err != nil {
-			log.Fatal(err)
-		}
-		if _, err = r.Writer(create); err != nil {
-			log.Fatal(err)
-		}
-		if err = create.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}
-	for _, r := range s.o.Pages {
-		outParts := strings.Split(r.Regexp.String(), "|")
-		for _, out := range outParts {
-			out = strings.Trim(out, "^$")
-			if out == "/" {
-				continue
-			}
-
-			var create *os.File
-			create, err = os.Create(filepath.Join(s.o.BuildOutput, out+".html"))
-			if err != nil {
-				log.Fatal(err)
-			}
-			if _, err = create.Write([]byte(r.PageFunc(godom.Document()).String())); err != nil {
-				log.Fatal(err)
-			}
-			if err = create.Close(); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	return true
-}
-
-func findMain() (file string, err error) {
-	for i := 0; i < 10; i++ {
-		if pc, f, _, ok := runtime.Caller(i); ok {
-			if runtime.FuncForPC(pc).Name() == "main.main" {
-				return f, nil
-			}
-		}
-	}
-	return "", errors.New("unable to determine main file name")
 }

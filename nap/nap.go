@@ -48,7 +48,7 @@ func (c *Config) WithApp(app App) *Config {
 func (c *Config) Setup(isServer bool) error {
 	c.isServer = isServer
 	if !isServer {
-		godom.Console().Log("%c NAP NAP NAP NAP NAP ", "font-size: 4em; color: red;")
+		godom.Console().Log("%c"+"⬜⬜⬜ startup ⬜⬜⬜", "font-size: 1.5em; color: white;")
 	}
 	if c.App == nil {
 		return fmt.Errorf("missing App in configuration")
