@@ -129,6 +129,7 @@ func TestElement_isAlwaysClose(t *testing.T) {
 	a := require.New(t)
 	api := Document().DocApi()
 	a.True(api.El("script").(*element).isAlwaysClose())
+	a.True(api.El("span").(*element).isAlwaysClose())
 	a.True(api.El("textarea").(*element).isAlwaysClose())
 	a.False(api.El("div").(*element).isAlwaysClose())
 }

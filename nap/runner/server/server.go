@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/nap"
 	"github.com/mlctrez/godom/nap/runner/build"
 	"net"
@@ -46,10 +45,13 @@ type server struct {
 func (s *server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	request.URL.Path = strings.TrimPrefix(request.URL.Path, s.o.PagesPath)
 	s.o.Logger.Debug("ServeHTTP", "url", request.URL.String())
+
+	ctx := nap.NewDocContext(request.URL, nil)
+
 	for _, r := range s.o.Pages {
 		if r.Regexp.MatchString(request.URL.Path) {
 			writer.Header().Set("Content-Type", "text/html")
-			pageHtml := r.PageFunc(godom.Document())
+			pageHtml := r.PageFunc(ctx)
 			if _, err := writer.Write([]byte(pageHtml.String())); err != nil {
 				s.o.Logger.Error("error writing response", "error", err)
 			}
@@ -67,7 +69,7 @@ func (s *server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	}
 	if s.o.NotFoundFunc != nil {
 		writer.Header().Set("Content-Type", "text/html")
-		pageHtml := s.o.NotFoundFunc(request.URL, godom.Document())
+		pageHtml := s.o.NotFoundFunc(request.URL, ctx)
 		if _, err := writer.Write([]byte(pageHtml.String())); err != nil {
 			s.o.Logger.Error("error writing response", "error", err)
 		}

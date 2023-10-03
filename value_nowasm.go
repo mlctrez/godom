@@ -5,6 +5,7 @@ package godom
 import (
 	"fmt"
 	"github.com/mlctrez/godom/convert"
+	"github.com/mlctrez/godom/gdutil"
 	"reflect"
 	"unicode"
 )
@@ -25,12 +26,8 @@ func ToJsValue(arg interface{}) interface{} {
 func (m *value) GoValue() interface{}      { return m.gov }
 func (m *value) SetGoValue(gv interface{}) { m.gov = gv }
 
-// reflectTypeOf returns reflect.TypeOf(in) or nil for nil in.
 func reflectTypeOf(in any) (out any) {
-	if in != nil {
-		out = reflect.TypeOf(in)
-	}
-	return out
+	return gdutil.ReflectTypeOf(in)
 }
 
 func (m *value) Type() Type {

@@ -51,19 +51,7 @@ func (a *App) run() (err error) {
 		case value := <-a.events:
 			switch v := value.(type) {
 			case *nap.Location:
-				if !v.External && !v.PopState {
-					a.Window.Get("history").Call("pushState", nil, "", a.prefixUrl(v.URL)+".html?_ij_reload=RELOAD_ON_SAVE")
-				}
-				if !v.External {
-					a.navigate(v.URL)
-					//api := a.Document.DocApi().WithCallback(callback.Reflect(a.h))
-					//bCtx := &app.Context{Doc: api, URL: v.URL, Events: a.events}
-					//newBody := a.h.Body(bCtx)
-					//a.lastBody.ReplaceWith(newBody)
-					//a.lastBody = newBody
-				} else {
-					// TODO: external url handling
-				}
+				a.location(v)
 			}
 		case <-a.c.Context.Done():
 			a.releaseEventHandlers()
@@ -75,23 +63,33 @@ func (a *App) run() (err error) {
 	}
 }
 
+func (a *App) location(v *nap.Location) {
+
+	if !v.External && !v.PopState {
+		a.Window.Get("history").Call("pushState", nil, "", a.historyUrl(v.URL))
+	}
+	if !v.External {
+		a.navigate(v.URL)
+	} else {
+		// TODO: external url handling
+	}
+
+}
+
 func (a *App) navigate(u *url.URL) {
 	a.c.Logger.Debug("navigate", "url", u.String())
-	doc := godom.Document()
+	ctx := nap.NewDocContext(u, a.events)
 	for _, page := range a.c.Pages {
 		if page.Regexp.MatchString(u.Path) {
-			a.c.Logger.Debug("navigate matched", "path", u.Path)
-			a.replaceBody(page.PageFunc(doc))
+			a.replaceBody(page.PageFunc(ctx))
 			return
 		}
 	}
 	if a.c.NotFoundFunc != nil {
-		a.c.Logger.Debug("navigate not found", "path", u.Path)
-		a.replaceBody(a.c.NotFoundFunc(u, doc))
+		a.replaceBody(a.c.NotFoundFunc(u, ctx))
 		return
 	}
-	body := doc.DocApi().H("<body>page not found</body>")
-	a.replaceBody(body)
+	a.replaceBody(ctx.DocApi().H("<body>page not found</body>"))
 }
 
 func (a *App) replaceBody(htmlPage godom.Element) {
@@ -103,15 +101,14 @@ func (a *App) replaceBody(htmlPage godom.Element) {
 	godom.Document().Body().ReplaceWith(body)
 }
 
-func (a *App) prefixUrl(u *url.URL) string {
-	if a.c.PagesPath == "" {
-		return u.String()
+func (a *App) historyUrl(u *url.URL) string {
+	histUrl := &url.URL{}
+	*histUrl = *u
+	if histUrl.Path == "/" {
+		histUrl.Path = "/index"
 	}
-	// avoid modifying original
-	withPrefix := &url.URL{}
-	*withPrefix = *u
-	withPrefix.Path = a.c.PagesPath + withPrefix.Path
-	return withPrefix.String()
+	histUrl.Path = a.c.PagesPath + histUrl.Path + ".html"
+	return histUrl.String() + "?_ij_reload=RELOAD_ON_SAVE"
 }
 
 func (a *App) URL() *url.URL {

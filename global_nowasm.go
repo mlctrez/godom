@@ -67,7 +67,9 @@ type mockDocument struct {
 func (md *mockDocument) CreateElement(tag string) Value {
 	me := &mockElement{}
 	me.Set("nodeName", tag)
-	return toValue(me)
+	v := toValue(me)
+	me.Set("_value", v)
+	return v
 }
 
 func (md *mockDocument) CreateTextNode(text string) Value {
@@ -108,6 +110,16 @@ func (m *mockElement) RemoveChild(child Value) {
 		updated = append(updated, otherChild)
 	}
 	m.children = updated
+}
+
+func (m *mockElement) ReplaceWith(other Value) {
+	switch ot := other.(type) {
+	case *value:
+		oe := m.Get("_value").(*value).GoValue().(*element)
+		ne := ot.gov.(*element)
+		oe.children = ne.children
+		oe.attributes = ne.attributes
+	}
 }
 
 var dummyFunc = func() {}

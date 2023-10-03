@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/demoapp/pages/boot"
+	"github.com/mlctrez/godom/demoapp/pages/navbar"
 	"github.com/mlctrez/godom/nap"
 	"github.com/mlctrez/wasmexec"
 	"io"
@@ -52,12 +53,20 @@ var headHtml string
 //go:embed index.html
 var indexHtml string
 
+//go:embed about.html
+var aboutHtml string
+
 func (p *Pages) pageFunc(body *string) nap.PageFunc {
 	return func(ctx nap.DocContext) (page godom.Element) {
 		if p.c.IsServer() {
 			page = ctx.DocApi().H(headHtml)
 		}
 		bodyEl := ctx.DocApi().H(*body)
+		nav := bodyEl.GetElementsByTagName("nav")
+		if len(nav) == 1 {
+			nav[0].ReplaceWith(navbar.Render(ctx))
+		}
+
 		if page != nil {
 			page.AppendChild(bodyEl)
 		} else {
@@ -66,16 +75,3 @@ func (p *Pages) pageFunc(body *string) nap.PageFunc {
 		return page
 	}
 }
-
-//func (p *Pages) index(ctx nap.DocContext) godom.Element {
-//	html := ctx.DocApi().H(headHtml)
-//	html.AppendChild(ctx.DocApi().H(indexHtml))
-//	return html
-//}
-
-//go:embed about.html
-var aboutHtml string
-
-//func (p *Pages) about(ctx nap.DocContext) godom.Element {
-//	return ctx.DocApi().H(aboutHtml)
-//}

@@ -3,9 +3,9 @@ package build
 import (
 	"errors"
 	"github.com/mlctrez/cmdrunner"
-	"github.com/mlctrez/godom"
 	"github.com/mlctrez/godom/nap"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -90,7 +90,10 @@ func Run(o *nap.Config) (err error) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if _, err = create.Write([]byte(r.PageFunc(godom.Document()).String())); err != nil {
+
+			ctx := nap.NewDocContext(&url.URL{Path: out}, nil)
+
+			if _, err = create.Write([]byte(r.PageFunc(ctx).String())); err != nil {
 				log.Fatal(err)
 			}
 			if err = create.Close(); err != nil {

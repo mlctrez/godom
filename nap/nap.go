@@ -66,6 +66,31 @@ func (c *Config) IsServer() bool {
 
 type DocContext interface {
 	DocApi() godom.DocApi
+	URL() *url.URL
+	Event(evt Event)
+}
+
+var _ DocContext = (*docContext)(nil)
+
+func NewDocContext(u *url.URL, events chan Event) DocContext {
+	return &docContext{
+		docApi: godom.NewDocApi(godom.Document().This()),
+		url:    u,
+		events: events,
+	}
+}
+
+type docContext struct {
+	docApi godom.DocApi
+	url    *url.URL
+	events chan Event
+}
+
+func (d *docContext) DocApi() godom.DocApi { return d.docApi }
+func (d *docContext) URL() *url.URL        { return d.url }
+func (d *docContext) Event(ev Event) {
+	fmt.Printf("DocContext Event %+v\n", ev)
+	d.events <- ev
 }
 
 type App interface {
